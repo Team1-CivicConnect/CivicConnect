@@ -1,8 +1,6 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 exports.categorize = async (req, res, next) => {
     try {
@@ -28,13 +26,9 @@ Priority guidelines:
 Title: ${title}
 Description: ${description}`;
 
-        const msg = await anthropic.messages.create({
-            model: "claude-3-haiku-20240307",
-            max_tokens: 300,
-            messages: [{ role: "user", content: prompt }]
-        });
-
-        const aiRes = msg.content[0].text;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
+        const msg = await model.generateContent(prompt);
+        const aiRes = msg.response.text();
         const parsed = JSON.parse(aiRes.trim());
         res.status(200).json(parsed);
     } catch (error) {
@@ -71,13 +65,9 @@ Location: ${address}
 EXISTING ISSUES:
 ${existingJson}`;
 
-        const msg = await anthropic.messages.create({
-            model: "claude-3-haiku-20240307",
-            max_tokens: 300,
-            messages: [{ role: "user", content: prompt }]
-        });
-
-        const parsed = JSON.parse(msg.content[0].text.trim());
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
+        const msg = await model.generateContent(prompt);
+        const parsed = JSON.parse(msg.response.text().trim());
         res.status(200).json(parsed);
     } catch (error) {
         console.error("AI Check Duplicate Error", error);
@@ -100,13 +90,9 @@ Return ONLY JSON:
 
 Query: ${query}`;
 
-        const msg = await anthropic.messages.create({
-            model: "claude-3-haiku-20240307",
-            max_tokens: 300,
-            messages: [{ role: "user", content: prompt }]
-        });
-
-        const parsed = JSON.parse(msg.content[0].text.trim());
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", generationConfig: { responseMimeType: "application/json" } });
+        const msg = await model.generateContent(prompt);
+        const parsed = JSON.parse(msg.response.text().trim());
         res.status(200).json(parsed);
     } catch (error) {
         console.error("AI Search Error", error);

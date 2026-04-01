@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* cache burst */
+
+@layer base {
+  body {
+    @apply font-poppins bg-ub-bg-page text-ub-text-primary antialiased;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: 800;
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 48px;
+    }
+
+    h2 {
+      font-size: 28px;
+    }
+
+    h3 {
+      font-size: 20px;
+    }
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-ub-green-medium text-white rounded-[8px] px-[22px] py-[10px] font-bold hover:bg-ub-green-dark transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border-2 border-ub-green-medium text-ub-green-medium rounded-[8px] px-[22px] py-[10px] hover:bg-ub-green-pale transition-colors;
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 3s infinite;
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Glassmorphism utility */
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+
+  .glass-dark {
+    @apply bg-black/30 backdrop-blur-lg border border-white/10 shadow-2xl;
+  }
+
+  .btn-hero {
+    @apply bg-transparent border-2 border-white text-white rounded-[6px] px-[22px] py-[10px] hover:bg-white/15 transition-colors;
+  }
+
+  .ub-card {
+    @apply bg-white border border-ub-border rounded-[12px];
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    padding: 20px 24px;
+  }
+
+  .ub-badge {
+    @apply text-[11px] font-semibold px-2 py-1 rounded-full;
+  }
+}

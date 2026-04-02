@@ -1,10 +1,22 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Activity, MapPin, Cpu, BarChart3, Shield, Fingerprint, ShieldCheck, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowRight, Activity, MapPin, Cpu, BarChart3, Shield, Fingerprint, ShieldCheck, Users, Heart, Zap, Eye } from 'lucide-react';
 import CivicGlobe from '../components/ui/CivicGlobe';
 
 export default function LandingPage() {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const location = useLocation();
+
+    // Smooth scroll to #about when navigating from /about
+    useEffect(() => {
+        if (location.pathname === '/about') {
+            setTimeout(() => {
+                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        } else {
+            window.scrollTo(0, 0);
+        }
+    }, [location.pathname]);
 
     const handleMouseMove = (e) => {
         const { currentTarget: target } = e;
@@ -38,7 +50,7 @@ export default function LandingPage() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ub-green-mint opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-ub-green-medium"></span>
                             </span>
-                            UBAYOG MUNICIPAL ENGINE
+                            CIVICCONNECT PLATFORM
                         </div>
 
                         <h1 className="text-5xl md:text-7xl font-black mb-6 leading-[1.05] tracking-tighter">
@@ -52,16 +64,16 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="text-gray-400 text-lg md:text-xl font-medium mb-12 max-w-lg leading-relaxed">
-                            Deploy a massive network of citizen sensors. Report, track, and resolve physical infrastructural fractures directly with authorized municipal repair hubs.
+                            Report potholes, broken lights, water leaks and more. Track every issue from submission to resolution with full transparency.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-5">
                             <Link to="/report" className="group relative overflow-hidden bg-ub-green-medium text-white px-8 py-4 rounded-2xl font-black shadow-[0_0_40px_rgba(46,125,50,0.4)] hover:shadow-[0_0_60px_rgba(46,125,50,0.6)] hover:-translate-y-1 transition-all flex items-center justify-center gap-3 text-lg">
                                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                                Initiate Pipeline <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                Report an Issue <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link to="/map" className="group glass-dark hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3 text-lg">
-                                <MapPin size={20} className="text-ub-blue-hero group-hover:scale-110 transition-transform" /> Global Radar
+                                <MapPin size={20} className="text-ub-blue-hero group-hover:scale-110 transition-transform" /> Live Map
                             </Link>
                         </div>
                     </div>
@@ -75,7 +87,7 @@ export default function LandingPage() {
                             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
                                 <div className="flex items-center gap-2">
                                     <Activity size={18} className="text-ub-green-medium" />
-                                    <h3 className="font-black text-white tracking-widest text-[11px] uppercase">Live Administrative Feed</h3>
+                                    <h3 className="font-black text-white tracking-widest text-[11px] uppercase">Live Issue Feed</h3>
                                 </div>
                                 <div className="flex gap-2">
                                     <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]"></span>
@@ -93,7 +105,7 @@ export default function LandingPage() {
                                             <div className="font-black text-white text-sm">Critical Pothole Depth</div>
                                             <div className="text-[9px] font-black uppercase text-red-400 tracking-widest border border-red-500/30 bg-red-500/10 px-2 py-0.5 rounded-md">Priority 1</div>
                                         </div>
-                                        <div className="text-xs text-gray-400 font-medium">Node #ISS-8B29 • Logged 2m ago</div>
+                                        <div className="text-xs text-gray-400 font-medium">Issue #ISS-8B29 • Reported 2m ago</div>
                                     </div>
                                 </div>
                                 <div className="bg-white/5 hover:bg-white/10 transition-colors rounded-2xl p-5 flex items-center gap-5 border border-white/5 cursor-default relative overflow-hidden group">
@@ -104,7 +116,7 @@ export default function LandingPage() {
                                             <div className="font-black text-white text-sm">Main Pipeline Rupture</div>
                                             <div className="text-[9px] font-black uppercase text-amber-400 tracking-widest border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 rounded-md">Active</div>
                                         </div>
-                                        <div className="text-xs text-gray-400 font-medium">Node #ISS-4A11 • Dispatching Crew</div>
+                                        <div className="text-xs text-gray-400 font-medium">Issue #ISS-4A11 • Crew Dispatched</div>
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +124,7 @@ export default function LandingPage() {
 
                         {/* Decorative Tag */}
                         <div className="absolute -bottom-6 -right-6 glass-dark bg-ub-blue-hero/80 backdrop-blur-xl border border-white/20 px-6 py-4 rounded-2xl animate-float-delayed z-30 shadow-2xl">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">System Relay Hub</div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">Platform Status</div>
                             <div className="font-black text-xl text-white flex items-center gap-2"><Activity size={18} /> 100% Online</div>
                         </div>
                     </div>
@@ -144,10 +156,10 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto glass backdrop-blur-2xl bg-white border border-gray-100 rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 md:p-10">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-gray-100">
                         {[
-                            { val: '1,248+', label: 'Anomalies Processed', icon: BarChart3 },
-                            { val: '< 5m', label: 'Average Node Triage', icon: Activity },
-                            { val: '450+', label: 'Active Identity Nodes', icon: Users },
-                            { val: '256-bit', label: 'Layer Encryption', icon: Shield }
+                            { val: '1,248+', label: 'Issues Resolved', icon: BarChart3 },
+                            { val: '< 5 min', label: 'Average Response Time', icon: Activity },
+                            { val: '450+', label: 'Active Citizens', icon: Users },
+                            { val: '100%', label: 'Data Encrypted', icon: Shield }
                         ].map((stat, idx) => (
                             <div key={idx} className={`text-center flex flex-col items-center justify-center group ${idx !== 0 && 'pl-8'}`}>
                                 <div className="w-12 h-12 rounded-2xl bg-blue-50 text-ub-blue-hero flex items-center justify-center mb-4 group-hover:bg-ub-blue-hero group-hover:scale-110 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
@@ -168,9 +180,9 @@ export default function LandingPage() {
 
                 <div className="max-w-7xl mx-auto px-4 md:px-8">
                     <div className="text-center max-w-3xl mx-auto mb-20 animate-fadeIn">
-                        <span className="text-ub-blue-hero font-black tracking-[0.2em] uppercase text-xs">The Civic Engine</span>
-                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-6 tracking-tight">Eradicate Municipal Delay.</h2>
-                        <p className="text-gray-500 font-medium text-lg">Ubayog’s CivicConnect replaces outdated hotlines with a transparent, citizen-verified continuous software pipeline.</p>
+                        <span className="text-ub-blue-hero font-black tracking-[0.2em] uppercase text-xs">How It Works</span>
+                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-6 tracking-tight">Fix Your Neighbourhood. Faster.</h2>
+                        <p className="text-gray-500 font-medium text-lg">CivicConnect replaces outdated complaint hotlines with a transparent, real-time tracking platform built for modern cities.</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6">
@@ -187,9 +199,9 @@ export default function LandingPage() {
                                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-ub-blue-hero text-white mb-8 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                     <MapPin size={28} strokeWidth={2.5} />
                                 </div>
-                                <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Geospatial Targeting</h3>
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">GPS-Powered Location</h3>
                                 <p className="text-gray-500 font-medium leading-relaxed">
-                                    Our interface directly hooks into device mapping APIs to grab precise coordinate telemetry, bypassing ambiguous manual address entry entirely.
+                                    Simply tap to detect your location automatically, or drop a pin right where the issue is. No need to type long addresses.
                                 </p>
                             </div>
                         </div>
@@ -208,7 +220,7 @@ export default function LandingPage() {
                                 </div>
                                 <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Real-Time Dashboards</h3>
                                 <p className="text-gray-500 font-medium leading-relaxed">
-                                    Submitted anomaly reports instantly enter our central administrative grid, enabling municipal operators to triage, prioritize, and dispatch fleets cleanly.
+                                    Every submitted report instantly appears on the admin dashboard, allowing municipal teams to prioritize, assign crews, and resolve issues faster.
                                 </p>
                             </div>
                         </div>
@@ -225,9 +237,9 @@ export default function LandingPage() {
                                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-ub-green-dark text-white mb-8 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                                     <ShieldCheck size={28} strokeWidth={2.5} />
                                 </div>
-                                <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Immutable Tracking</h3>
+                                <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Transparent Tracking</h3>
                                 <p className="text-gray-500 font-medium leading-relaxed">
-                                    An integrated linear pipeline allows citizens to securely observe their ticket progress from administrative review all the way to physical repair.
+                                    Track your reported issue at every stage — from submitted, to under review, to crew dispatched, to fully resolved. No more wondering.
                                 </p>
                             </div>
                         </div>
@@ -236,7 +248,82 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Premium Corporate Footer / CTA */}
+            {/* About Section */}
+            <section id="about" className="py-28 relative overflow-hidden bg-gray-50 border-t border-gray-200">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-ub-blue-hero blur-[200px] opacity-5 pointer-events-none"></div>
+
+                <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
+                    <div className="text-center max-w-3xl mx-auto mb-20">
+                        <span className="text-ub-blue-hero font-black tracking-[0.2em] uppercase text-xs">About CivicConnect</span>
+                        <h2 className="text-4xl md:text-5xl font-black text-gray-900 mt-4 mb-6 tracking-tight">Built for Citizens. <br />Trusted by Cities.</h2>
+                        <p className="text-gray-500 font-medium text-lg leading-relaxed">
+                            CivicConnect is a modern civic engagement platform designed to bridge the gap between citizens and municipal authorities. We believe every pothole fixed, every streetlight repaired, and every water leak stopped starts with an empowered community.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8 mb-20">
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-center group hover:shadow-xl transition-all">
+                            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-ub-blue-hero mx-auto mb-6 flex items-center justify-center group-hover:scale-110 group-hover:bg-ub-blue-hero group-hover:text-white transition-all shadow-sm">
+                                <Eye size={28} />
+                            </div>
+                            <h3 className="font-black text-xl text-gray-900 mb-3 tracking-tight">Our Mission</h3>
+                            <p className="text-gray-500 font-medium text-sm leading-relaxed">Make civic issue reporting as easy as sending a text. We aim to give every citizen a direct voice in improving their neighbourhood.</p>
+                        </div>
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-center group hover:shadow-xl transition-all">
+                            <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 mx-auto mb-6 flex items-center justify-center group-hover:scale-110 group-hover:bg-green-500 group-hover:text-white transition-all shadow-sm">
+                                <Heart size={28} />
+                            </div>
+                            <h3 className="font-black text-xl text-gray-900 mb-3 tracking-tight">Community First</h3>
+                            <p className="text-gray-500 font-medium text-sm leading-relaxed">Every feature is designed with real citizens in mind. Simple forms, GPS auto-detection, photo uploads, and a volunteer system that brings people together.</p>
+                        </div>
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] text-center group hover:shadow-xl transition-all">
+                            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 mx-auto mb-6 flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm">
+                                <Zap size={28} />
+                            </div>
+                            <h3 className="font-black text-xl text-gray-900 mb-3 tracking-tight">Built to Scale</h3>
+                            <p className="text-gray-500 font-medium text-sm leading-relaxed">From a single ward to an entire metro area. CivicConnect's architecture is designed to handle thousands of reports across multiple cities.</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-10 md:p-14">
+                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                            <div>
+                                <h3 className="text-3xl font-black text-gray-900 tracking-tight mb-6">How It Works</h3>
+                                <div className="space-y-6">
+                                    <div className="flex gap-5">
+                                        <div className="w-10 h-10 rounded-xl bg-ub-blue-hero text-white flex items-center justify-center font-black shrink-0 shadow-lg">1</div>
+                                        <div>
+                                            <div className="font-black text-gray-900 mb-1">Spot an Issue</div>
+                                            <div className="text-sm text-gray-500 font-medium">See a pothole, broken light, or waste pile? Open CivicConnect on your phone.</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-5">
+                                        <div className="w-10 h-10 rounded-xl bg-ub-blue-hero text-white flex items-center justify-center font-black shrink-0 shadow-lg">2</div>
+                                        <div>
+                                            <div className="font-black text-gray-900 mb-1">Report It</div>
+                                            <div className="text-sm text-gray-500 font-medium">Take a photo, let GPS auto-detect your location. Add a brief description and submit.</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-5">
+                                        <div className="w-10 h-10 rounded-xl bg-ub-blue-hero text-white flex items-center justify-center font-black shrink-0 shadow-lg">3</div>
+                                        <div>
+                                            <div className="font-black text-gray-900 mb-1">Track Resolution</div>
+                                            <div className="text-sm text-gray-500 font-medium">Watch your report move through the pipeline — from review to crew dispatch to resolved.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-3xl p-10 border border-gray-100 text-center">
+                                <div className="text-6xl font-black text-gray-900 tracking-tighter mb-2">3</div>
+                                <div className="text-[11px] font-black uppercase tracking-widest text-ub-blue-hero mb-6">Simple Steps</div>
+                                <p className="text-gray-500 font-medium text-sm">From spotting an issue to resolution — CivicConnect keeps it simple, transparent, and community-driven.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
             <section className="py-32 relative overflow-hidden border-t border-gray-200 bg-white">
                 <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-[0.02] mix-blend-multiply pointer-events-none"></div>
 
@@ -246,7 +333,7 @@ export default function LandingPage() {
                     </div>
 
                     <h2 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tighter mb-8 leading-[1.1]">
-                        Forge your <br />Identity Node today.
+                        Join Your <br />Community Today.
                     </h2>
 
                     <p className="text-gray-500 text-lg font-medium mb-12 max-w-2xl mx-auto">
@@ -256,7 +343,7 @@ export default function LandingPage() {
                     <div className="flex flex-col sm:flex-row gap-5 justify-center">
                         <Link to="/register" className="relative hidden md:inline-flex group overflow-hidden bg-black text-white px-10 py-5 rounded-2xl font-black hover:scale-105 transition-transform text-lg tracking-wider">
                             <span className="absolute inset-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                            Initialize Account
+                            Create Free Account
                         </Link>
                     </div>
                 </div>

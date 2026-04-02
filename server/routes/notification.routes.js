@@ -6,7 +6,8 @@ const authenticate = require('../middleware/authenticate');
 router.use(authenticate);
 
 router.get('/', notificationController.getNotifications);
-router.patch('/:id/read', notificationController.markAsRead);
+// IMPORTANT: specific routes BEFORE param routes to avoid /read-all matching /:id
 router.patch('/read-all', notificationController.markAllAsRead);
+router.patch('/:id/read', notificationController.markAsRead);
 
 module.exports = router;

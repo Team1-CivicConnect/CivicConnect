@@ -9,6 +9,7 @@ import ReportPage from './pages/ReportPage';
 import VerifyOtpPage from './pages/VerifyOtpPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import MyVolunteering from './pages/MyVolunteering';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -76,6 +77,11 @@ function App() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-volunteering" element={
+            <ProtectedRoute>
+              <MyVolunteering />
             </ProtectedRoute>
           } />
         </Route>

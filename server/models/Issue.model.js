@@ -43,6 +43,11 @@ const issueSchema = new mongoose.Schema({
         note: String
     }],
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    department: {
+        type: String,
+        enum: ['Roads & Highways', 'Sanitation', 'Water Board', 'Electricity Board', 'Parks & Rec', 'Police', 'Admin Core', 'Other'],
+        default: 'Other'
+    },
     resolutionNote: { type: String },
     resolvedAt: { type: Date },
     expectedResolutionDate: { type: Date },

@@ -14,5 +14,6 @@ router.get('/issues/export', adminController.exportIssues);
 router.get('/heatmap', adminController.getHeatmap);
 router.get('/users', adminController.getUsers);
 router.patch('/users/:id', adminController.updateUser);
+router.get('/leaderboard', adminController.getLeaderboard);
 
 module.exports = router;

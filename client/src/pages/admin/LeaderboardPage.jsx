@@ -1,30 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, TrendingUp, MapPin, Flame, Medal, Download, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DUMMY_LEADERBOARD } from '../../data/dashboardData';
 import toast from 'react-hot-toast';
+import api from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const RANK_STYLES = {
     1: { row: 'bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400', rank: 'bg-yellow-400 text-white shadow-lg shadow-yellow-200' },
-    2: { row: 'bg-gradient-to-r from-slate-50 to-gray-50 border-l-4 border-gray-400',   rank: 'bg-gray-400 text-white shadow-lg shadow-gray-200' },
+    2: { row: 'bg-gradient-to-r from-slate-50 to-gray-50 border-l-4 border-gray-400', rank: 'bg-gray-400 text-white shadow-lg shadow-gray-200' },
     3: { row: 'bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-400', rank: 'bg-orange-400 text-white shadow-lg shadow-orange-200' },
 };
 
-function handleExport() {
-    toast.success('📄 Leaderboard PDF queued — Ready for download!', {
-        duration: 3000,
-        style: { background: '#0A0F1C', color: '#fff', fontWeight: 700, fontSize: '13px' }
-    });
-}
+// ─── Top 3 Podium Cards ───────────────────────────────────────────────────────
 
 // ─── Top 3 Podium Cards ───────────────────────────────────────────────────────
 function PodiumCard({ player, height, delay }) {
     const colors = {
-        1: { bg: 'from-yellow-400 to-amber-500',   ring: 'ring-yellow-300',  label: '#1', labelBg: 'bg-yellow-500' },
-        2: { bg: 'from-slate-400 to-gray-500',      ring: 'ring-gray-300',    label: '#2', labelBg: 'bg-gray-500' },
-        3: { bg: 'from-orange-400 to-amber-600',    ring: 'ring-orange-300',  label: '#3', labelBg: 'bg-orange-500' },
+        1: { bg: 'from-yellow-400 to-amber-500', ring: 'ring-yellow-300', label: '#1', labelBg: 'bg-yellow-500' },
+        2: { bg: 'from-slate-400 to-gray-500', ring: 'ring-gray-300', label: '#2', labelBg: 'bg-gray-500' },
+        3: { bg: 'from-orange-400 to-amber-600', ring: 'ring-orange-300', label: '#3', labelBg: 'bg-orange-500' },
     };
     const c = colors[player.rank];
     return (
@@ -57,14 +55,93 @@ function PodiumCard({ player, height, delay }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function LeaderboardPage() {
     const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [leaderboard, setLeaderboard] = useState([]);
 
-    const filtered = DUMMY_LEADERBOARD.filter(p =>
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                const { data } = await api.get('/admin/leaderboard');
+                setLeaderboard(data);
+            } catch (error) {
+                toast.error('Failed to load live leaderboard data');
+                setLeaderboard([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLeaderboard();
+    }, []);
+
+    const handleExport = () => {
+        if (leaderboard.length === 0) {
+            toast.error('No data to export');
+            return;
+        }
+
+        const doc = new jsPDF();
+
+        // Add Title
+        doc.setFontSize(22);
+        doc.text('CivicConnect', 14, 20);
+        doc.setFontSize(16);
+        doc.text('Citizen Leaderboard Report', 14, 30);
+
+        // Add Date
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 40);
+
+        // Prepare data for table
+        const tableColumn = ["Rank", "Name", "Total Resolved", "Contribution Score", "Tier"];
+        const tableRows = [];
+
+        leaderboard.forEach(player => {
+            const rowData = [
+                player.rank,
+                player.name,
+                player.resolved,
+                player.score,
+                player.badge || 'New'
+            ];
+            tableRows.push(rowData);
+        });
+
+        // Add autoTable
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 3 },
+            headStyles: { fillColor: [27, 63, 160], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 248, 255] }
+        });
+
+        // Save PDF
+        doc.save(`CivicConnect_Leaderboard_${new Date().toISOString().split('T')[0]}.pdf`);
+
+        toast.success('📄 Leaderboard PDF successfully downloaded!', {
+            duration: 3000,
+            style: { background: '#0A0F1C', color: '#fff', fontWeight: 700, fontSize: '13px' }
+        });
+    };
+
+    const filtered = leaderboard.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.area.toLowerCase().includes(search.toLowerCase())
     );
 
-    const top3 = DUMMY_LEADERBOARD.filter(p => p.rank <= 3);
-    const podiumOrder = [top3[1], top3[0], top3[2]]; // silver, gold, bronze visual order
+    const top3 = leaderboard.filter(p => p.rank <= 3);
+    const podiumOrder = top3.length === 3 ? [top3[1], top3[0], top3[2]] : (top3.length === 2 ? [top3[1], top3[0]] : top3); // silver, gold, bronze visual order
+
+    if (loading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-gray-50">
+                <div className="w-12 h-12 border-4 border-ub-blue-hero/20 border-t-ub-blue-hero rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 md:p-10 bg-gray-50 min-h-full font-sans">

@@ -3,8 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Filter, ThumbsUp, Activity, Map as MapIcon, Shield } from 'lucide-react';
+import { Filter, ThumbsUp, Activity, Map as MapIcon, Shield, Layers, Flame } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { HeatmapLayer } from 'react-leaflet-heatmap-layer-v3';
 
 // Dynamic cinematic markers via HTML array - Enterprise styling
 const createIcon = (color) => {
@@ -47,6 +48,7 @@ export default function MapPage() {
     const [loading, setLoading] = useState(true);
     const [filterCat, setFilterCat] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [viewMode, setViewMode] = useState('pins'); // 'pins' | 'heatmap'
 
     useEffect(() => {
         fetchPins();
@@ -81,56 +83,70 @@ export default function MapPage() {
                         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                     />
 
-                    {filtered.map(issue => {
-                        if (!issue.location?.coordinates || issue.location.coordinates.length < 2) return null;
+                    {viewMode === 'heatmap' ? (
+                        <HeatmapLayer
+                            fitBoundsOnLoad
+                            fitBoundsOnUpdate
+                            points={filtered.filter(i => i.location?.coordinates?.length >= 2).map(i => [i.location.coordinates[1], i.location.coordinates[0], (i.upvoteCount || 0) * 10 + 20])}
+                            longitudeExtractor={m => m[1]}
+                            latitudeExtractor={m => m[0]}
+                            intensityExtractor={m => parseFloat(m[2])}
+                            radius={25}
+                            blur={15}
+                            maxZoom={15}
+                        />
+                    ) : (
+                        filtered.map(issue => {
+                            if (!issue.location?.coordinates || issue.location.coordinates.length < 2) return null;
 
-                        return (
-                            <Marker
-                                key={issue._id}
-                                position={[issue.location.coordinates[1], issue.location.coordinates[0]]}
-                                icon={createIcon(statusColors[issue.status] || '#000')}
-                            >
-                                <Popup className="corporate-light-popup" minWidth={280}>
-                                    <div className="bg-white text-gray-900 p-1 -m-4 rounded-xl overflow-hidden border border-gray-200 shadow-2xl">
-                                        {/* Thumbnail Render */}
-                                        {issue.photos?.[0] ? (
-                                            <div className="h-32 w-full bg-gray-100 border-b border-gray-200 relative">
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                                                <img src={issue.photos[0].url} alt="thumbnail" className="w-full h-full object-cover" />
-                                            </div>
-                                        ) : (
-                                            <div className="h-20 w-full bg-blue-50 border-b border-blue-100 flex items-center justify-center">
-                                                <MapIcon size={28} className="text-blue-300" />
-                                            </div>
-                                        )}
+                            return (
+                                <Marker
+                                    key={issue._id}
+                                    position={[issue.location.coordinates[1], issue.location.coordinates[0]]}
+                                    icon={createIcon(statusColors[issue.status] || '#000')}
+                                >
+                                    <Popup className="corporate-light-popup" minWidth={280}>
+                                        <div className="bg-white text-gray-900 p-1 -m-4 rounded-xl overflow-hidden border border-gray-200 shadow-2xl">
+                                            {/* Thumbnail Render */}
+                                            {issue.photos?.[0] ? (
+                                                <div className="h-32 w-full bg-gray-100 border-b border-gray-200 relative">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                                                    <img src={issue.photos[0].url} alt="thumbnail" className="w-full h-full object-cover" />
+                                                </div>
+                                            ) : (
+                                                <div className="h-20 w-full bg-blue-50 border-b border-blue-100 flex items-center justify-center">
+                                                    <MapIcon size={28} className="text-blue-300" />
+                                                </div>
+                                            )}
 
-                                        <div className="p-5 relative z-20 -mt-8">
-                                            <div className="inline-block bg-white shadow-md shadow-black/5 px-2.5 py-1 rounded-md border border-gray-100 text-[9px] font-black uppercase text-ub-blue-hero mb-3 tracking-widest">
-                                                {issue.category.replace('_', ' ')}
-                                            </div>
+                                            <div className="p-5 relative z-20 -mt-8">
+                                                <div className="inline-block bg-white shadow-md shadow-black/5 px-2.5 py-1 rounded-md border border-gray-100 text-[9px] font-black uppercase text-ub-blue-hero mb-3 tracking-widest">
+                                                    {issue.category.replace('_', ' ')}
+                                                </div>
 
-                                            <div className="font-black text-lg text-gray-900 leading-tight mb-4 line-clamp-2" title={issue.title}>
-                                                {issue.title}
-                                            </div>
+                                                <div className="font-black text-lg text-gray-900 leading-tight mb-4 line-clamp-2" title={issue.title}>
+                                                    {issue.title}
+                                                </div>
 
-                                            <div className="flex items-center justify-between mb-5 border-t border-gray-100 pt-4">
-                                                <span className="text-[9px] bg-gray-50 px-2.5 py-1.5 rounded-md text-gray-600 font-black uppercase tracking-widest border border-gray-200">
-                                                    {issue.status.replace('_', ' ')}
-                                                </span>
-                                                <span className="flex items-center text-[10px] font-black text-ub-green-medium gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-100 shadow-sm shadow-green-100/50">
-                                                    <ThumbsUp size={12} className="text-ub-green-medium" /> {issue.upvoteCount} Votes
-                                                </span>
-                                            </div>
+                                                <div className="flex items-center justify-between mb-5 border-t border-gray-100 pt-4">
+                                                    <span className="text-[9px] bg-gray-50 px-2.5 py-1.5 rounded-md text-gray-600 font-black uppercase tracking-widest border border-gray-200">
+                                                        {issue.status.replace('_', ' ')}
+                                                    </span>
+                                                    <span className="flex items-center text-[10px] font-black text-ub-green-medium gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-100 shadow-sm shadow-green-100/50">
+                                                        <ThumbsUp size={12} className="text-ub-green-medium" /> {issue.upvoteCount} Votes
+                                                    </span>
+                                                </div>
 
-                                            <Link to={`/issue/${issue._id}`} className="block w-full text-center text-xs bg-ub-blue-hero hover:bg-ub-blue-dark text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-[0_5px_15px_rgba(27,63,160,0.2)] hover:shadow-[0_8px_20px_rgba(27,63,160,0.3)] hover:-translate-y-0.5">
-                                                View Report Details
-                                            </Link>
+                                                <Link to={`/issue/${issue._id}`} className="block w-full text-center text-xs bg-ub-blue-hero hover:bg-ub-blue-dark text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-[0_5px_15px_rgba(27,63,160,0.2)] hover:shadow-[0_8px_20px_rgba(27,63,160,0.3)] hover:-translate-y-0.5">
+                                                    View Report Details
+                                                </Link>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Popup>
-                            </Marker>
-                        );
-                    })}
+                                    </Popup>
+                                </Marker>
+                            );
+                        })
+                    )}
                 </MapContainer>
             </div>
 
@@ -153,8 +169,22 @@ export default function MapPage() {
                             <Activity size={26} className="opacity-80" />
                         </div>
                         <div className="flex flex-col justify-center">
-                            <div className="text-4xl font-black text-gray-900 leading-none tracking-tighter mb-1">{filtered.length}</div>
+                            <div className="text-3xl font-black text-gray-900 leading-none tracking-tighter mb-1">{filtered.length}</div>
                             <div className="text-[10px] font-black uppercase tracking-widest text-ub-blue-hero/80">Active Reports</div>
+                        </div>
+                        <div className="ml-auto flex flex-col gap-1">
+                            <button
+                                onClick={() => setViewMode('pins')}
+                                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded border transition-all flex items-center justify-center gap-1.5 ${viewMode === 'pins' ? 'bg-ub-blue-hero text-white border-ub-blue-hero shadow-sm' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                            >
+                                <Layers size={12} /> Pins
+                            </button>
+                            <button
+                                onClick={() => setViewMode('heatmap')}
+                                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded border transition-all flex items-center justify-center gap-1.5 ${viewMode === 'heatmap' ? 'bg-red-500 text-white border-red-500 shadow-sm' : 'bg-white text-red-500 border-red-200 hover:bg-red-50'}`}
+                            >
+                                <Flame size={12} /> Heat
+                            </button>
                         </div>
                     </div>
 
@@ -170,8 +200,8 @@ export default function MapPage() {
                                         key={cat.id}
                                         onClick={() => setFilterCat(cat.id)}
                                         className={`px-4 py-2.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all duration-300 border ${filterCat === cat.id
-                                                ? 'bg-ub-blue-hero border-ub-blue-hero text-white shadow-[0_4px_12px_rgba(27,63,160,0.25)] scale-105'
-                                                : 'bg-white/60 border-gray-200 text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm hover:-translate-y-0.5'
+                                            ? 'bg-ub-blue-hero border-ub-blue-hero text-white shadow-[0_4px_12px_rgba(27,63,160,0.25)] scale-105'
+                                            : 'bg-white/60 border-gray-200 text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm hover:-translate-y-0.5'
                                             }`}
                                     >
                                         {cat.label}
@@ -196,8 +226,8 @@ export default function MapPage() {
                                         key={status.id}
                                         onClick={() => setFilterStatus(status.id)}
                                         className={`px-4 py-3 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all border shadow-sm ${filterStatus === status.id
-                                                ? 'bg-gray-900 border-gray-900 text-white transform scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.15)]'
-                                                : 'bg-white/60 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-white'
+                                            ? 'bg-gray-900 border-gray-900 text-white transform scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.15)]'
+                                            : 'bg-white/60 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-white'
                                             }`}
                                     >
                                         {status.label}

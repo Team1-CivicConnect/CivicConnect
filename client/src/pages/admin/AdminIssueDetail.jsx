@@ -5,7 +5,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import toast from 'react-hot-toast';
-import { ShieldCheck, MessageSquare, AlertTriangle, RefreshCw, FileText, Bot } from 'lucide-react';
+import { ShieldCheck, MessageSquare, AlertTriangle, RefreshCw, FileText, Bot, Briefcase, UserCheck } from 'lucide-react';
 
 const createIcon = (color) => L.divIcon({
     className: 'custom-pin',
@@ -20,12 +20,16 @@ export default function AdminIssueDetail() {
 
     const [issue, setIssue] = useState(null);
     const [comments, setComments] = useState([]);
+    const [volunteers, setVolunteers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [newComment, setNewComment] = useState('');
     const [isInternalNode, setIsInternalNote] = useState(false);
+
+    // Modification states
     const [updateStatus, setUpdateStatus] = useState('');
     const [statusNote, setStatusNote] = useState('');
+    const [assignDept, setAssignDept] = useState('');
 
     useEffect(() => {
         fetchIssueData();
@@ -33,13 +37,16 @@ export default function AdminIssueDetail() {
 
     const fetchIssueData = async () => {
         try {
-            const [issueRes, commentsRes] = await Promise.all([
+            const [issueRes, commentsRes, volRes] = await Promise.all([
                 api.get(`/issues/${id}`),
-                api.get(`/issues/${id}/comments`)
+                api.get(`/issues/${id}/comments`),
+                api.get(`/issues/${id}/volunteers`).catch(() => ({ data: { volunteers: [] } }))
             ]);
             setIssue(issueRes.data.issue);
             setUpdateStatus(issueRes.data.issue.status);
+            setAssignDept(issueRes.data.issue.department || 'Other');
             setComments(commentsRes.data.comments);
+            setVolunteers(volRes.data.volunteers || []);
         } catch (err) {
             toast.error('Failed to load deep dive ticket');
         } finally {
@@ -59,6 +66,27 @@ export default function AdminIssueDetail() {
             toast.success('Status formally escalated');
         } catch (err) {
             toast.error('Failed to change status timeline');
+        }
+    };
+
+    const handleAssignDepartment = async (e) => {
+        e.preventDefault();
+        try {
+            const { data } = await api.patch(`/admin/issues/${id}/assign`, { department: assignDept });
+            setIssue(prev => ({ ...prev, department: data.issue.department }));
+            toast.success(`Routed to ${assignDept}`);
+        } catch (err) {
+            toast.error('Failed to assign department');
+        }
+    };
+
+    const handleVolunteerReview = async (volId, action) => {
+        try {
+            const { data } = await api.patch(`/volunteers/${volId}`, { status: action });
+            setVolunteers(prev => prev.map(v => v._id === volId ? { ...v, status: action } : v));
+            toast.success(`Volunteer successfully ${action}`);
+        } catch (err) {
+            toast.error(`Failed to ${action} volunteer`);
         }
     };
 
@@ -111,6 +139,7 @@ export default function AdminIssueDetail() {
                             <div className="flex flex-wrap items-center gap-3 text-sm text-ub-text-secondary mb-6 pb-6 border-b border-ub-border">
                                 <span className="font-mono bg-blue-50 text-ub-blue-hero font-bold px-2 py-0.5 rounded">{issue.issueId}</span>
                                 <span className="bg-gray-100 text-ub-text-primary px-2 font-bold uppercase text-[10px] tracking-widest py-1 border border-gray-200 rounded">{issue.category.replace('_', ' ')}</span>
+                                <span className="bg-amber-50 text-amber-900 border border-amber-200 px-2 font-bold uppercase text-[10px] tracking-widest py-1 rounded">Dept: {issue.department || 'Unassigned'}</span>
                                 <span className="text-xs font-semibold">{new Date(issue.createdAt).toLocaleString()}</span>
                             </div>
 
@@ -209,6 +238,27 @@ export default function AdminIssueDetail() {
                 <div className="space-y-6">
 
                     {/* Action Modifier Widget */}
+                    <div className="ub-card !p-5 border-2 border-amber-400 shadow-sm relative overflow-hidden mb-6">
+                        <h3 className="font-black text-sm uppercase tracking-wider text-amber-700 mb-4 flex items-center gap-2">
+                            <Briefcase size={16} /> Route to Department
+                        </h3>
+                        <form onSubmit={handleAssignDepartment}>
+                            <div className="mb-4">
+                                <select
+                                    value={assignDept} onChange={(e) => setAssignDept(e.target.value)}
+                                    className="w-full border-2 border-ub-border rounded-lg px-3 py-2 text-sm font-extrabold focus:outline-none focus:border-amber-400 transition-colors bg-gray-50 uppercase tracking-widest"
+                                >
+                                    {['Roads & Highways', 'Sanitation', 'Water Board', 'Electricity Board', 'Parks & Rec', 'Police', 'Admin Core', 'Other'].map(dept => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button type="submit" className="w-full btn-primary !bg-amber-500 hover:!bg-amber-600 flex justify-center !py-2.5 !text-sm text-white">
+                                Route Internal Transfer
+                            </button>
+                        </form>
+                    </div>
+
                     <div className="ub-card !p-5 border-2 border-ub-green-medium shadow-sm relative overflow-hidden">
                         <h3 className="font-black text-sm uppercase tracking-wider text-ub-green-dark mb-4 flex items-center gap-2">
                             <RefreshCw size={16} /> Override Ticket Status
@@ -257,7 +307,7 @@ export default function AdminIssueDetail() {
                     </div>
 
                     {/* Actor Profile */}
-                    <div className="ub-card !p-5 shadow-sm border border-ub-border">
+                    <div className="ub-card !p-5 shadow-sm border border-ub-border mb-6">
                         <h3 className="font-bold text-[10px] uppercase text-ub-text-muted tracking-widest mb-4">Actor Profile</h3>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded shadow-sm bg-gray-100 border border-gray-200 text-ub-blue-hero font-black flex items-center justify-center text-lg">
@@ -274,6 +324,38 @@ export default function AdminIssueDetail() {
                                 <span className="font-black text-ub-green-dark">{issue.reportedBy.contributionScore} pts</span>
                             </div>
                         )}
+                    </div>
+
+                    {/* Volunteer Force Management */}
+                    <div className="ub-card !p-0 shadow-sm border border-ub-border overflow-hidden">
+                        <div className="bg-pink-50 border-b border-pink-100 px-5 py-3 flex items-center gap-2">
+                            <UserCheck size={16} className="text-pink-600" />
+                            <h3 className="font-black text-[10px] uppercase text-pink-700 tracking-widest">Active Volunteering</h3>
+                        </div>
+                        <div className="p-5 max-h-[300px] overflow-y-auto">
+                            {volunteers.length === 0 ? (
+                                <p className="text-xs text-gray-400 font-bold italic text-center">No community assets deployed</p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {volunteers.map(vol => (
+                                        <div key={vol._id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="font-bold text-sm">{vol.userId?.name || 'Asset'}</span>
+                                                <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded ${vol.status === 'approved' ? 'bg-green-100 text-green-700' : vol.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{vol.status}</span>
+                                            </div>
+                                            <div className="text-xs text-gray-600 mb-2">{vol.message || "No comms provided."}</div>
+                                            {vol.skills && vol.skills.length > 0 && <div className="flex flex-wrap gap-1 mb-3">{vol.skills.map(s => <span key={s} className="bg-white border border-gray-200 text-[9px] font-bold text-gray-500 px-1 rounded">{s}</span>)}</div>}
+                                            {vol.status === 'pending' && (
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleVolunteerReview(vol._id, 'approved')} className="flex-1 bg-green-500 hover:bg-green-600 text-white text-[10px] uppercase font-bold py-1.5 rounded transition">Approve</button>
+                                                    <button onClick={() => handleVolunteerReview(vol._id, 'rejected')} className="flex-1 bg-red-500 hover:bg-red-600 text-white text-[10px] uppercase font-bold py-1.5 rounded transition">Reject</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                 </div>

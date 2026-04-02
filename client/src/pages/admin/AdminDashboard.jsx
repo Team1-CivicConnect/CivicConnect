@@ -1,32 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Activity, CheckCircle, Clock, AlertTriangle,
     ArrowUpRight, Shield, Layers, Download,
-    TrendingUp, MapPin, Trophy, FileText
+    TrendingUp, MapPin, Trophy, FileText, Loader
 } from 'lucide-react';
 import {
-    Chart as ChartJS,
-    CategoryScale, LinearScale, PointElement,
-    LineElement, BarElement, ArcElement,
-    Title, Tooltip, Legend, Filler
+    Chart as ChartJS, CategoryScale, LinearScale, PointElement,
+    LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import toast from 'react-hot-toast';
-import {
-    DUMMY_STATS,
-    DUMMY_CATEGORY_DATA,
-    DUMMY_AREA_DATA,
-    DUMMY_MONTHLY_TREND,
-    DUMMY_STATUS_BREAKDOWN,
-    DUMMY_ISSUES,
-} from '../../data/dashboardData';
+import api from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-ChartJS.register(
-    CategoryScale, LinearScale, PointElement,
-    LineElement, BarElement, ArcElement,
-    Title, Tooltip, Legend, Filler
-);
+// Fallback for Trend Line since historical data aggregating is complex
+import { DUMMY_MONTHLY_TREND } from '../../data/dashboardData';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -59,41 +51,30 @@ function SectionHeader({ title, subtitle, icon: Icon }) {
 // ─── Chart Configs ────────────────────────────────────────────────────────────
 
 const baseTooltip = {
-    backgroundColor: '#0A0F1C',
-    titleFont: { size: 10, weight: 800 },
-    bodyFont: { size: 12, weight: 800 },
-    padding: 12,
-    cornerRadius: 8,
-    displayColors: false,
+    backgroundColor: '#0A0F1C', titleFont: { size: 10, weight: 800 },
+    bodyFont: { size: 12, weight: 800 }, padding: 12, cornerRadius: 8, displayColors: false,
 };
-
 const baseTicks = { font: { size: 10, weight: 700 } };
 
-function getCategoryBarData() {
+function getCategoryBarData(categoryStats) {
     return {
-        labels: DUMMY_CATEGORY_DATA.labels,
+        labels: categoryStats.map(s => s._id || 'Unknown'),
         datasets: [{
-            data: DUMMY_CATEGORY_DATA.values,
-            backgroundColor: [
-                '#1B3FA0', '#3B82F6', '#10B981',
-                '#F59E0B', '#EF4444', '#8B5CF6'
-            ],
-            borderRadius: 7,
-            barThickness: 36,
+            data: categoryStats.map(s => s.count),
+            backgroundColor: ['#1B3FA0', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+            borderRadius: 7, barThickness: 36,
         }]
     };
 }
 
-function getAreaBarData() {
+function getAreaBarData(areaStats) {
     return {
-        labels: DUMMY_AREA_DATA.labels,
+        labels: areaStats.map(s => s._id || 'Unknown'),
         datasets: [{
             label: 'Issues Reported',
-            data: DUMMY_AREA_DATA.values,
-            backgroundColor: '#1B3FA0',
-            hoverBackgroundColor: '#102562',
-            borderRadius: 7,
-            barThickness: 30,
+            data: areaStats.map(s => s.count),
+            backgroundColor: '#1B3FA0', hoverBackgroundColor: '#102562',
+            borderRadius: 7, barThickness: 30,
         }]
     };
 }
@@ -103,46 +84,37 @@ function getTrendLineData() {
         labels: DUMMY_MONTHLY_TREND.labels,
         datasets: [
             {
-                label: 'Reported',
-                data: DUMMY_MONTHLY_TREND.reported,
-                borderColor: '#1B3FA0',
-                backgroundColor: 'rgba(27,63,160,0.08)',
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#1B3FA0',
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                label: 'Reported', data: DUMMY_MONTHLY_TREND.reported,
+                borderColor: '#1B3FA0', backgroundColor: 'rgba(27,63,160,0.08)',
+                tension: 0.4, fill: true, pointBackgroundColor: '#1B3FA0', pointRadius: 4, pointHoverRadius: 6,
             },
             {
-                label: 'Resolved',
-                data: DUMMY_MONTHLY_TREND.resolved,
-                borderColor: '#10B981',
-                backgroundColor: 'rgba(16,185,129,0.08)',
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#10B981',
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                label: 'Resolved', data: DUMMY_MONTHLY_TREND.resolved,
+                borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.08)',
+                tension: 0.4, fill: true, pointBackgroundColor: '#10B981', pointRadius: 4, pointHoverRadius: 6,
             }
         ]
     };
 }
 
-function getStatusDoughnutData() {
+function getStatusDoughnutData(statusStats) {
+    const labels = statusStats.map(s => s._id || 'Unknown');
+    const values = statusStats.map(s => s.count);
+    const colors = labels.map(l => {
+        if (l === 'resolved') return '#10B981';
+        if (l === 'in_progress') return '#3B82F6';
+        if (l === 'under_review') return '#F59E0B';
+        return '#EF4444';
+    });
+
     return {
-        labels: DUMMY_STATUS_BREAKDOWN.labels,
-        datasets: [{
-            data: DUMMY_STATUS_BREAKDOWN.values,
-            backgroundColor: DUMMY_STATUS_BREAKDOWN.colors,
-            borderWidth: 0,
-            hoverOffset: 10,
-        }]
+        labels,
+        datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 10, }]
     };
 }
 
 const barOptions = {
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: baseTooltip },
+    maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: baseTooltip },
     scales: {
         y: { grid: { borderDash: [4, 4], color: '#f3f4f6' }, border: { display: false }, ticks: baseTicks },
         x: { grid: { display: false }, border: { display: false }, ticks: baseTicks }
@@ -151,10 +123,7 @@ const barOptions = {
 
 const lineOptions = {
     maintainAspectRatio: false,
-    plugins: {
-        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 700 } } },
-        tooltip: baseTooltip
-    },
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 700 } } }, tooltip: baseTooltip },
     scales: {
         y: { grid: { borderDash: [4, 4], color: '#f3f4f6' }, border: { display: false }, ticks: baseTicks },
         x: { grid: { display: false }, border: { display: false }, ticks: baseTicks }
@@ -162,20 +131,16 @@ const lineOptions = {
 };
 
 const doughnutOptions = {
-    maintainAspectRatio: false,
-    cutout: '72%',
-    plugins: {
-        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 10, weight: 700 } } },
-        tooltip: baseTooltip,
-    }
+    maintainAspectRatio: false, cutout: '72%',
+    plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 10, weight: 700 } } }, tooltip: baseTooltip, }
 };
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 const STATUS_STYLES = {
-    resolved:     'bg-green-50 text-green-700 border border-green-200',
-    in_progress:  'bg-blue-50 text-blue-700 border border-blue-200',
+    resolved: 'bg-green-50 text-green-700 border border-green-200',
+    in_progress: 'bg-blue-50 text-blue-700 border border-blue-200',
     under_review: 'bg-amber-50 text-amber-700 border border-amber-200',
-    submitted:    'bg-red-50 text-red-700 border border-red-200',
+    submitted: 'bg-red-50 text-red-700 border border-red-200',
 };
 const STATUS_LABELS = {
     resolved: 'Resolved', in_progress: 'In Progress',
@@ -186,23 +151,99 @@ const CAT_EMOJI = {
     water_leak: '💧', fallen_tree: '🌳', other: '🌀',
 };
 
-// ─── PDF Export handler (UI only) ─────────────────────────────────────────────
-function handlePDFExport() {
-    toast.success('📄 Report queued for PDF export — Ready for download!', {
-        duration: 3000,
-        style: { background: '#0A0F1C', color: '#fff', fontWeight: 700, fontSize: '13px' }
-    });
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
-    const stats = DUMMY_STATS;
-    const issues = DUMMY_ISSUES;
+    const [stats, setStats] = useState(null);
+    const [issues, setIssues] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('category'); // 'category' | 'area'
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const [statsRes, issuesRes] = await Promise.all([
+                    api.get('/admin/stats'),
+                    api.get('/admin/issues?limit=5')
+                ]);
+                setStats(statsRes.data);
+                setIssues(issuesRes.data.issues || []);
+            } catch (err) {
+                toast.error('Failed to load live dashboard data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    const handlePDFExport = () => {
+        if (!stats) return;
+
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(22);
+        doc.text('CivicConnect Admin', 14, 20);
+        doc.setFontSize(16);
+        doc.text('Global Analytics Report', 14, 30);
+
+        // Date
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 40);
+
+        // Overview Stats
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`Total Infrastructure Logs: ${stats.total}`, 14, 55);
+        doc.text(`Pending Actions: ${stats.pending}`, 14, 65);
+        doc.text(`Nodes Resolved: ${stats.resolved}`, 14, 75);
+        doc.text(`Avg Resolution Days: ${stats.avgResolutionDays}`, 14, 85);
+
+        // Recent Issues Table
+        doc.setFontSize(14);
+        doc.text("Recent Activity Array", 14, 105);
+
+        const tableColumn = ["ID", "Title", "Area", "Status"];
+        const tableRows = [];
+
+        issues.forEach(issue => {
+            tableRows.push([
+                issue.issueId,
+                issue.title.substring(0, 30),
+                issue.area || 'Unknown',
+                issue.status
+            ]);
+        });
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 115,
+            theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 3 },
+            headStyles: { fillColor: [27, 63, 160], textColor: [255, 255, 255] },
+        });
+
+        doc.save(`CivicConnect_Analytics_${new Date().toISOString().split('T')[0]}.pdf`);
+
+        toast.success('📄 Analytics PDF exported successfully!', {
+            duration: 3000,
+            style: { background: '#0A0F1C', color: '#fff', fontWeight: 700, fontSize: '13px' }
+        });
+    };
+
+    if (loading || !stats) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-gray-50 flex-col gap-4">
+                <Loader className="w-12 h-12 text-ub-blue-hero animate-spin" />
+                <div className="font-black text-xs uppercase tracking-widest text-gray-500">Syncing with Mainframe...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 md:p-10 bg-gray-50 min-h-full font-sans">
-
             {/* ── Header ── */}
             <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
@@ -216,49 +257,20 @@ export default function AdminDashboard() {
                     </p>
                 </div>
 
-                {/* PDF Export Button */}
                 <button
-                    id="btn-pdf-export"
                     onClick={handlePDFExport}
                     className="inline-flex items-center gap-2 bg-ub-blue-hero hover:bg-ub-blue-dark text-white px-5 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(27,63,160,0.35)] hover:shadow-[0_6px_28px_rgba(27,63,160,0.5)] transition-all active:scale-95"
                 >
-                    <Download size={15} />
-                    Download Report
+                    <Download size={15} /> Download Report
                 </button>
             </div>
 
             {/* ── KPI Summary Cards ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-                <StatCard
-                    icon={Activity}
-                    iconBg="bg-blue-50"
-                    iconColor="text-ub-blue-hero"
-                    value={stats.total}
-                    label="Total Infrastructure Logs"
-                    sub={`+${stats.newThisMonth} this month`}
-                />
-                <StatCard
-                    icon={CheckCircle}
-                    iconBg="bg-green-50"
-                    iconColor="text-green-500"
-                    value={stats.resolved}
-                    label="Nodes Resolved"
-                    sub={`+${stats.resolvedThisWeek} this week`}
-                />
-                <StatCard
-                    icon={AlertTriangle}
-                    iconBg="bg-red-50"
-                    iconColor="text-red-500"
-                    value={stats.pending}
-                    label="Pending Critical Actions"
-                />
-                <StatCard
-                    icon={Clock}
-                    iconBg="bg-amber-50"
-                    iconColor="text-amber-500"
-                    value={`${stats.avgResolutionDays}`}
-                    label="Avg Resolution (Days)"
-                />
+                <StatCard icon={Activity} iconBg="bg-blue-50" iconColor="text-ub-blue-hero" value={stats.total} label="Total Infrastructure Logs" sub={`+${stats.newThisMonth} this month`} />
+                <StatCard icon={CheckCircle} iconBg="bg-green-50" iconColor="text-green-500" value={stats.resolved} label="Nodes Resolved" sub={`+${stats.resolvedThisWeek} this week`} />
+                <StatCard icon={AlertTriangle} iconBg="bg-red-50" iconColor="text-red-500" value={stats.pending} label="Pending Critical Actions" />
+                <StatCard icon={Clock} iconBg="bg-amber-50" iconColor="text-amber-500" value={`${stats.avgResolutionDays}`} label="Avg Resolution (Days)" />
             </div>
 
             {/* ── Analytics: Trend Line + Doughnut ── */}
@@ -266,16 +278,14 @@ export default function AdminDashboard() {
                 {/* Trend Line Chart */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
                     <SectionHeader icon={TrendingUp} title="6-Month Issue Trend" subtitle="Reported vs Resolved volume" />
-                    <div className="h-64">
-                        <Line data={getTrendLineData()} options={lineOptions} />
-                    </div>
+                    <div className="h-64"><Line data={getTrendLineData()} options={lineOptions} /></div>
                 </div>
 
                 {/* Status Doughnut */}
                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
                     <SectionHeader icon={Shield} title="Pipeline Status" subtitle="Resolution engine breakdown" />
                     <div className="h-52 relative">
-                        <Doughnut data={getStatusDoughnutData()} options={doughnutOptions} />
+                        <Doughnut data={getStatusDoughnutData(stats.statusStats || [])} options={doughnutOptions} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <div className="text-3xl font-black text-gray-900 tracking-tighter">{stats.total}</div>
                             <div className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total</div>
@@ -290,14 +300,12 @@ export default function AdminDashboard() {
                     <SectionHeader icon={Layers} title="Distribution Analysis" subtitle="Volume by category & location" />
                     <div className="flex gap-2 shrink-0">
                         <button
-                            id="tab-category"
                             onClick={() => setActiveTab('category')}
                             className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'category' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >
                             By Category
                         </button>
                         <button
-                            id="tab-area"
                             onClick={() => setActiveTab('area')}
                             className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'area' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >
@@ -307,8 +315,8 @@ export default function AdminDashboard() {
                 </div>
                 <div className="h-72">
                     {activeTab === 'category'
-                        ? <Bar data={getCategoryBarData()} options={barOptions} />
-                        : <Bar data={getAreaBarData()} options={barOptions} />
+                        ? <Bar data={getCategoryBarData(stats.categoryStats || [])} options={barOptions} />
+                        : <Bar data={getAreaBarData(stats.areaStats || [])} options={barOptions} />
                     }
                 </div>
             </div>
@@ -322,10 +330,7 @@ export default function AdminDashboard() {
                         </h3>
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Most recent network alerts</div>
                     </div>
-                    <Link
-                        to="/admin/issues"
-                        className="text-[10px] font-black bg-white border border-gray-200 px-4 py-2 rounded-lg hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1"
-                    >
+                    <Link to="/admin/issues" className="text-[10px] font-black bg-white border border-gray-200 px-4 py-2 rounded-lg hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1">
                         View All <ArrowUpRight size={13} />
                     </Link>
                 </div>
@@ -342,32 +347,32 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody className="text-sm">
                             {issues.map(issue => (
-                                <tr key={issue.id} className="bg-white hover:bg-blue-50/30 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
+                                <tr key={issue._id} className="bg-white hover:bg-blue-50/30 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
                                     <td className="px-5 py-4 rounded-l-2xl">
                                         <div className="flex items-center gap-3">
                                             <div className="bg-gray-50 w-9 h-9 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 text-lg">
                                                 {CAT_EMOJI[issue.category] || '🌀'}
                                             </div>
                                             <div>
-                                                <div className="font-black text-[10px] text-ub-blue-hero uppercase tracking-widest">{issue.id}</div>
+                                                <div className="font-black text-[10px] text-ub-blue-hero uppercase tracking-widest">{issue.issueId}</div>
                                                 <div className="font-bold text-gray-900 text-sm max-w-[200px] truncate">{issue.title}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-5 py-4">
-                                        <span className="font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 text-xs">{issue.reporter}</span>
+                                        <span className="font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 text-xs">{issue.reportedBy?.name || 'Anonymous'}</span>
                                     </td>
                                     <td className="px-5 py-4 hidden md:table-cell">
                                         <span className="flex items-center gap-1 text-xs font-bold text-gray-500">
-                                            <MapPin size={12} /> {issue.area}
+                                            <MapPin size={12} /> {issue.area || 'Unknown'}
                                         </span>
                                     </td>
                                     <td className="px-5 py-4 hidden sm:table-cell">
-                                        <span className="text-xs font-bold text-gray-400">{issue.date}</span>
+                                        <span className="text-xs font-bold text-gray-400">{new Date(issue.createdAt).toLocaleDateString()}</span>
                                     </td>
                                     <td className="px-5 py-4 rounded-r-2xl text-right">
                                         <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${STATUS_STYLES[issue.status]}`}>
-                                            {STATUS_LABELS[issue.status]}
+                                            {STATUS_LABELS[issue.status] || issue.status}
                                         </span>
                                     </td>
                                 </tr>
@@ -379,10 +384,7 @@ export default function AdminDashboard() {
 
             {/* ── Quick Nav Cards ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link
-                    to="/admin/leaderboard"
-                    className="flex items-center gap-4 bg-gradient-to-r from-ub-blue-hero to-blue-500 text-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(27,63,160,0.3)] hover:shadow-[0_8px_30px_rgba(27,63,160,0.45)] transition-all hover:scale-[1.02] active:scale-100"
-                >
+                <Link to="/admin/leaderboard" className="flex items-center gap-4 bg-gradient-to-r from-ub-blue-hero to-blue-500 text-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(27,63,160,0.3)] hover:shadow-[0_8px_30px_rgba(27,63,160,0.45)] transition-all hover:scale-[1.02] active:scale-100">
                     <Trophy size={28} />
                     <div>
                         <div className="font-black text-lg">Citizen Leaderboard</div>
@@ -390,10 +392,7 @@ export default function AdminDashboard() {
                     </div>
                     <ArrowUpRight size={18} className="ml-auto" />
                 </Link>
-                <button
-                    onClick={handlePDFExport}
-                    className="flex items-center gap-4 bg-white border border-gray-200 text-gray-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all hover:scale-[1.02] active:scale-100"
-                >
+                <button onClick={handlePDFExport} className="flex items-center gap-4 bg-white border border-gray-200 text-gray-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all hover:scale-[1.02] active:scale-100">
                     <Download size={28} className="text-ub-blue-hero" />
                     <div className="text-left">
                         <div className="font-black text-lg">Export Analytics PDF</div>

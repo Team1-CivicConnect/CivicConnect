@@ -73,7 +73,7 @@ export default function IssueDetailPage() {
                     setVolunteerStatus(myVol.status);
                     setVolunteerId(myVol._id);
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }, [user, issue, id]);
 
@@ -118,6 +118,11 @@ export default function IssueDetailPage() {
                                 <span className="font-black uppercase text-[10px] tracking-widest border border-blue-400/30 bg-blue-500/20 px-3 py-1 rounded-full text-blue-100 backdrop-blur-sm">
                                     {issue.category.replace('_', ' ')}
                                 </span>
+                                {issue.department && issue.department !== 'Other' && (
+                                    <span className="font-black uppercase text-[10px] tracking-widest border border-amber-400/30 bg-amber-500/20 px-3 py-1 rounded-full text-amber-100 backdrop-blur-sm">
+                                        Routed to: {issue.department}
+                                    </span>
+                                )}
                                 <PriorityBadge priority={issue.priority} />
                             </div>
                         </div>
@@ -276,11 +281,10 @@ export default function IssueDetailPage() {
                                                 <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Skills (select all that apply)</div>
                                                 <div className="flex flex-wrap gap-2">
                                                     {['Plumbing', 'Electrical', 'Carpentry', 'General Labour', 'Cleaning', 'Other'].map(skill => (
-                                                        <label key={skill} className={`cursor-pointer text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
-                                                            volSkills.includes(skill)
+                                                        <label key={skill} className={`cursor-pointer text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${volSkills.includes(skill)
                                                                 ? 'bg-blue-100 text-blue-700 border-blue-300'
                                                                 : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                                                        }`}>
+                                                            }`}>
                                                             <input
                                                                 type="checkbox"
                                                                 className="sr-only"

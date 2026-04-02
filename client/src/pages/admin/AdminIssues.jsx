@@ -313,7 +313,7 @@ export default function AdminIssues() {
                                             className="inline-flex items-center gap-1.5 text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1.5 rounded-lg hover:bg-purple-100 transition-colors"
                                         >
                                             <Users size={14} />
-                                            {(issue.volunteers || []).length || 0}
+                                            {issue.volunteerSignups || 0}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 text-center">
@@ -374,11 +374,10 @@ export default function AdminIssues() {
                                                     <div className="font-bold text-gray-900 text-sm">{v.userId?.name || 'Unknown'}</div>
                                                     <div className="text-[10px] text-gray-400 font-bold">{v.userId?.email}</div>
                                                 </div>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-                                                    v.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' :
-                                                    v.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' :
-                                                    'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                                }`}>{v.status}</span>
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${v.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' :
+                                                        v.status === 'rejected' ? 'bg-red-100 text-red-700 border-red-200' :
+                                                            'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                                    }`}>{v.status}</span>
                                             </div>
                                             {v.skills && v.skills.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mb-2">

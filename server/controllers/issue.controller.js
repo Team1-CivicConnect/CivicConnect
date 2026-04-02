@@ -1,6 +1,7 @@
 const Issue = require('../models/Issue.model');
 const User = require('../models/User.model');
 const generateIssueId = require('../utils/generateIssueId');
+const { calculatePriority } = require('../utils/priorityEngine');
 
 exports.createIssue = async (req, res, next) => {
     try {
@@ -34,6 +35,10 @@ exports.createIssue = async (req, res, next) => {
             }]
         });
 
+        const { priorityScore, priority } = calculatePriority(issue);
+        issue.priorityScore = priorityScore;
+        issue.priority = priority;
+
         await issue.save();
 
         // Reward active user
@@ -52,15 +57,17 @@ exports.createIssue = async (req, res, next) => {
 
 exports.getAllIssues = async (req, res, next) => {
     try {
-        const { status, category, area, sort, page = 1, limit = 20 } = req.query;
+        const { status, category, area, sort, priority, page = 1, limit = 20 } = req.query;
 
         let query = {};
         if (status) query.status = status;
         if (category) query.category = category;
+        if (priority) query.priority = priority;
         if (area) query.area = new RegExp(area, 'i');
 
         let sortOption = { createdAt: -1 };
         if (sort === 'upvotes') sortOption = { upvoteCount: -1 };
+        if (sort === 'priority') sortOption = { priorityScore: -1 };
 
         const issues = await Issue.find(query)
             .populate('reportedBy', 'name avatar ward')
@@ -138,6 +145,12 @@ exports.toggleUpvote = async (req, res, next) => {
             issue.upvotes.push(req.user.id);
             issue.upvoteCount += 1;
             if (reporter) reporter.contributionScore += 2;
+        }
+
+        if (!issue.priorityOverride) {
+            const { priorityScore, priority } = calculatePriority(issue);
+            issue.priorityScore = priorityScore;
+            issue.priority = priority;
         }
 
         await issue.save();

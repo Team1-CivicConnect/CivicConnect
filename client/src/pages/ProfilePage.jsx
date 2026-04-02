@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { User, Award, CheckCircle, Clock, MapPin, Settings } from 'lucide-react';
+import { User, Award, CheckCircle, Clock, MapPin, Settings, Heart } from 'lucide-react';
 
 export default function ProfilePage() {
     const { user } = useContext(AuthContext);
@@ -73,6 +73,16 @@ export default function ProfilePage() {
                         <div className="text-xs uppercase tracking-widest font-bold opacity-90">Civic Contribution Score</div>
                         <p className="text-[10px] mt-3 opacity-80 leading-tight">You earn points by reporting local issues accurately and providing updates.</p>
                     </div>
+
+                    <Link to="/my-volunteering" className="ub-card !p-5 flex items-center gap-4 hover:border-ub-blue-hero transition-colors group block">
+                        <div className="w-10 h-10 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center shrink-0 group-hover:bg-pink-100 transition-colors">
+                            <Heart size={20} />
+                        </div>
+                        <div>
+                            <div className="font-bold text-gray-900 text-sm">My Volunteering</div>
+                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">View signups</div>
+                        </div>
+                    </Link>
 
                 </div>
 

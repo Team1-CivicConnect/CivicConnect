@@ -1,5 +1,6 @@
 const Issue = require('../models/Issue.model');
 const User = require('../models/User.model');
+const { sendIssueStatusEmail } = require('../services/email.service');
 
 // Basic stub implementation for admin analytics
 exports.getStats = async (req, res, next) => {
@@ -57,13 +58,27 @@ exports.updateIssueStatus = async (req, res, next) => {
 
         await issue.save();
 
-        // Reward points if resolved
-        if (status === 'resolved') {
-            const reporter = await User.findById(issue.reportedBy);
-            if (reporter) {
+        // Reward points if resolved + recalculate tier
+        const reporter = await User.findById(issue.reportedBy);
+        if (reporter) {
+            if (status === 'resolved') {
                 reporter.contributionScore += 25;
                 reporter.totalResolved += 1;
-                await reporter.save();
+            }
+            reporter.recalculateTier();
+            await reporter.save();
+
+            // Send email notification to citizen
+            try {
+                await sendIssueStatusEmail(
+                    reporter.email,
+                    reporter.name,
+                    issue.title,
+                    issue.issueId,
+                    status
+                );
+            } catch (emailErr) {
+                console.error('Status notification email failed:', emailErr.message);
             }
         }
 

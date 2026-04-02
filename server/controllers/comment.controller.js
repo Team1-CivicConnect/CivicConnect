@@ -1,6 +1,7 @@
 const Comment = require('../models/Comment.model');
 const Issue = require('../models/Issue.model');
 const Notification = require('../models/Notification.model');
+const User = require('../models/User.model');
 
 exports.getComments = async (req, res, next) => {
     try {
@@ -28,9 +29,17 @@ exports.createComment = async (req, res, next) => {
 
         await comment.save();
 
-        // Increment count & reward user 5 points
+        // Increment comment count on issue
         issue.commentCount += 1;
         await issue.save();
+
+        // Give 5 points to commenter
+        const commenter = await User.findById(req.user.id);
+        if (commenter) {
+            commenter.contributionScore += 5;
+            commenter.recalculateTier();
+            await commenter.save();
+        }
 
         // Create notification if reporter is not the commenter
         if (issue.reportedBy.toString() !== req.user.id) {
@@ -60,6 +69,14 @@ exports.deleteComment = async (req, res, next) => {
 
         await comment.remove();
         await Issue.findByIdAndUpdate(req.params.id, { $inc: { commentCount: -1 } });
+
+        // Remove 5 points from commenter when comment is deleted
+        const commenter = await User.findById(comment.author);
+        if (commenter) {
+            commenter.contributionScore = Math.max(0, commenter.contributionScore - 5);
+            commenter.recalculateTier();
+            await commenter.save();
+        }
 
         res.status(200).json({ message: 'Comment deleted' });
     } catch (err) {

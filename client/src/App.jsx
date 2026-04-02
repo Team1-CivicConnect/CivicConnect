@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import MapPage from './pages/MapPage';
 import ReportPage from './pages/ReportPage';
+import VerifyOtpPage from './pages/VerifyOtpPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -63,6 +64,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
           <Route path="/map" element={<MapPage />} />
 
           <Route path="/report" element={

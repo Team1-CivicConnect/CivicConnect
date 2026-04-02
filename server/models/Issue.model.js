@@ -14,6 +14,8 @@ const issueSchema = new mongoose.Schema({
     aiCategory: { type: String },
     aiConfidence: { type: Number },
     priority: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+    priorityScore: { type: Number, default: 0 },
+    priorityOverride: { type: Boolean, default: false },
     aiPriorityScore: { type: Number },
     duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
     isDuplicate: { type: Boolean, default: false },
@@ -53,6 +55,10 @@ const issueSchema = new mongoose.Schema({
 
     isPublic: { type: Boolean, default: true },
     tags: [String],
+    volunteers: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        approvedAt: Date
+    }],
 }, { timestamps: true });
 
 issueSchema.index({ location: '2dsphere' });

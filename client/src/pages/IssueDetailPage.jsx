@@ -5,7 +5,8 @@ import { AuthContext } from '../context/AuthContext';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import toast from 'react-hot-toast';
-import { MapPin, Calendar, ThumbsUp, MessageSquare, AlertTriangle, ShieldCheck, Flag, CheckCircle } from 'lucide-react';
+import { MapPin, Calendar, ThumbsUp, MessageSquare, AlertTriangle, ShieldCheck, Flag, CheckCircle, Download, Users } from 'lucide-react';
+import PriorityBadge from '../components/PriorityBadge';
 
 const createIcon = (color) => L.divIcon({
     className: 'custom-pin',
@@ -25,11 +26,56 @@ export default function IssueDetailPage() {
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
+    const [pdfLoading, setPdfLoading] = useState(false);
+
+    // Volunteer state
+    const [volunteerStatus, setVolunteerStatus] = useState(null); // null = not signed up
+    const [volunteerId, setVolunteerId] = useState(null);
+    const [showVolunteerForm, setShowVolunteerForm] = useState(false);
+    const [volMessage, setVolMessage] = useState('');
+    const [volSkills, setVolSkills] = useState([]);
+    const [volSubmitting, setVolSubmitting] = useState(false);
+    const [approvedVolunteerCount, setApprovedVolunteerCount] = useState(0);
+
+    const handleDownloadPdf = async () => {
+        setPdfLoading(true);
+        try {
+            const response = await api.get(`/export/issue/${id}/pdf`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `issue-${id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to download PDF');
+        } finally {
+            setPdfLoading(false);
+        }
+    };
 
     useEffect(() => {
-        api.get(`/issues/${id}`).then(res => setIssue(res.data.issue)).catch(() => toast.error('Ticket corrupted')).finally(() => setLoading(false));
+        api.get(`/issues/${id}`).then(res => {
+            setIssue(res.data.issue);
+            setApprovedVolunteerCount((res.data.issue.volunteers || []).length);
+        }).catch(() => toast.error('Ticket corrupted')).finally(() => setLoading(false));
         api.get(`/issues/${id}/comments`).then(res => setComments(res.data.comments)).catch(console.error);
     }, [id]);
+
+    // Check if current user already volunteered
+    useEffect(() => {
+        if (user && issue) {
+            api.get('/volunteers/my').then(res => {
+                const myVol = res.data.volunteers.find(v => v.issueId?._id === id || v.issueId === id);
+                if (myVol) {
+                    setVolunteerStatus(myVol.status);
+                    setVolunteerId(myVol._id);
+                }
+            }).catch(() => {});
+        }
+    }, [user, issue, id]);
 
     const handleUpvote = async () => {
         if (!user) return toast.error('Node offline. Authenticate to interact.');
@@ -72,6 +118,7 @@ export default function IssueDetailPage() {
                                 <span className="font-black uppercase text-[10px] tracking-widest border border-blue-400/30 bg-blue-500/20 px-3 py-1 rounded-full text-blue-100 backdrop-blur-sm">
                                     {issue.category.replace('_', ' ')}
                                 </span>
+                                <PriorityBadge priority={issue.priority} />
                             </div>
                         </div>
 
@@ -89,6 +136,11 @@ export default function IssueDetailPage() {
                                 >
                                     <ThumbsUp size={14} /> {issue.upvoteCount} Community Endorsements
                                 </button>
+                                {approvedVolunteerCount > 0 && (
+                                    <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-200 shadow-sm">
+                                        <Users size={14} /> 👷 {approvedVolunteerCount} volunteers helping
+                                    </div>
+                                )}
                             </div>
 
                             <div className="prose max-w-none text-gray-700 font-medium leading-relaxed mb-8 bg-blue-50/30 p-6 rounded-2xl border border-blue-100/50">
@@ -105,6 +157,20 @@ export default function IssueDetailPage() {
                                             </a>
                                         ))}
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Download PDF Button */}
+                            {user && (
+                                <div className="mt-6">
+                                    <button
+                                        onClick={handleDownloadPdf}
+                                        disabled={pdfLoading}
+                                        className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-md"
+                                    >
+                                        <Download size={14} />
+                                        {pdfLoading ? 'Generating...' : 'Download Report PDF'}
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -154,6 +220,112 @@ export default function IssueDetailPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* Volunteer Section */}
+                    {user && user.role !== 'admin' && issue.reportedBy?._id !== user.id && issue.status !== 'resolved' && (
+                        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-100 p-8">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                                <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center border border-pink-100"><Users size={20} /></div>
+                                <h2 className="text-xl font-black text-gray-900 tracking-tight">Volunteer to Help</h2>
+                            </div>
+
+                            {volunteerStatus ? (
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-bold text-gray-600">Your status:</span>
+                                        {volunteerStatus === 'pending' && <span className="text-[10px] font-black uppercase tracking-widest bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-full">Pending</span>}
+                                        {volunteerStatus === 'approved' && <span className="text-[10px] font-black uppercase tracking-widest bg-green-100 text-green-700 border border-green-200 px-2.5 py-1 rounded-full">Approved</span>}
+                                        {volunteerStatus === 'rejected' && <span className="text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-700 border border-red-200 px-2.5 py-1 rounded-full">Rejected</span>}
+                                    </div>
+                                    {volunteerStatus === 'pending' && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    await api.delete(`/volunteers/${volunteerId}`);
+                                                    setVolunteerStatus(null);
+                                                    setVolunteerId(null);
+                                                    toast.success('Signup withdrawn');
+                                                } catch (err) { toast.error('Failed to withdraw'); }
+                                            }}
+                                            className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-4 py-2 rounded-lg transition-colors"
+                                        >
+                                            Withdraw Signup
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    {!showVolunteerForm ? (
+                                        <button
+                                            onClick={() => setShowVolunteerForm(true)}
+                                            className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-md"
+                                        >
+                                            Sign Up as Volunteer
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <textarea
+                                                placeholder="Optional message (why you want to help)..."
+                                                className="w-full border-2 border-gray-200 bg-gray-50 rounded-xl p-4 text-sm font-medium focus:outline-none focus:border-blue-400 focus:bg-white transition-colors"
+                                                value={volMessage}
+                                                onChange={e => setVolMessage(e.target.value)}
+                                                maxLength={300}
+                                                rows={3}
+                                            />
+                                            <div>
+                                                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Skills (select all that apply)</div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {['Plumbing', 'Electrical', 'Carpentry', 'General Labour', 'Cleaning', 'Other'].map(skill => (
+                                                        <label key={skill} className={`cursor-pointer text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+                                                            volSkills.includes(skill)
+                                                                ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                                                : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                                        }`}>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only"
+                                                                checked={volSkills.includes(skill)}
+                                                                onChange={() => setVolSkills(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill])}
+                                                            />
+                                                            {skill}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    disabled={volSubmitting}
+                                                    onClick={async () => {
+                                                        setVolSubmitting(true);
+                                                        try {
+                                                            const { data } = await api.post(`/issues/${id}/volunteer`, { message: volMessage, skills: volSkills });
+                                                            setVolunteerStatus('pending');
+                                                            setVolunteerId(data.volunteer._id);
+                                                            setShowVolunteerForm(false);
+                                                            toast.success('Volunteer signup successful!');
+                                                        } catch (err) {
+                                                            toast.error(err.response?.data?.message || 'Failed to sign up');
+                                                        } finally {
+                                                            setVolSubmitting(false);
+                                                        }
+                                                    }}
+                                                    className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-md"
+                                                >
+                                                    {volSubmitting ? 'Submitting...' : 'Submit'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowVolunteerForm(false)}
+                                                    className="text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 px-4 py-2.5 rounded-xl transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Tracking Logistics Sidebar */}

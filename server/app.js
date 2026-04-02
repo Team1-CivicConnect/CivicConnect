@@ -35,6 +35,11 @@ app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/notifications', require('./routes/notification.routes'));
 app.use('/api/v1/ai', require('./routes/ai.routes'));
 
+// Feature Route Mounts
+app.use('/api/v1/issues', require('./routes/priority.routes'));
+app.use('/api/v1/export', require('./routes/exportRoutes'));
+app.use('/api/v1', require('./routes/volunteerRoutes'));
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -49,6 +54,15 @@ const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
+        
+        // Priority recalculation on startup & cron
+        const cron = require('node-cron');
+        const { recalculateAllPriorities } = require('./utils/priorityEngine');
+        recalculateAllPriorities();
+        cron.schedule('0 */6 * * *', () => {
+            recalculateAllPriorities();
+        });
+
         app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     })
     .catch((err) => {

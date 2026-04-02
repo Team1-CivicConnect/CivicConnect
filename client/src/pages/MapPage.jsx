@@ -3,17 +3,24 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import { Filter, ThumbsUp, Activity } from 'lucide-react';
+import { Filter, ThumbsUp, Activity, Map as MapIcon, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Dynamic custom markers via purely colored divs using standard CSS instead of remote images
+// Dynamic cinematic markers via HTML array - Enterprise styling
 const createIcon = (color) => {
     return L.divIcon({
-        className: 'custom-pin',
-        html: `<div style="background-color: ${color}; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"></div>`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 9],
-        popupAnchor: [0, -9]
+        className: 'bg-transparent border-0',
+        html: `
+            <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; width: 44px; height: 44px; background-color: ${color}; opacity: 0.15; border-radius: 50%; filter: blur(4px);"></div>
+                <div style="position: absolute; width: 16px; height: 16px; background-color: ${color}; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3)"></div>
+                <div style="position: absolute; width: 16px; height: 16px; background-color: ${color}; border-radius: 50%; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                <div style="width: 6px; height: 6px; background-color: #ffffff; border-radius: 50%; z-index: 10;"></div>
+            </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
     });
 };
 
@@ -25,6 +32,15 @@ const statusColors = {
     rejected: '#6B7280',      // Gray
     duplicate: '#6B7280'
 };
+
+const CATEGORIES = [
+    { id: 'all', label: 'All Issues' },
+    { id: 'pothole', label: 'Potholes' },
+    { id: 'street_light', label: 'Lighting Down' },
+    { id: 'garbage', label: 'Waste Hazards' },
+    { id: 'water_leak', label: 'Water Leaks' },
+    { id: 'fallen_tree', label: 'Fallen Trees' },
+];
 
 export default function MapPage() {
     const [issues, setIssues] = useState([]);
@@ -54,79 +70,18 @@ export default function MapPage() {
     });
 
     return (
-        <div className="relative h-[calc(100vh-64px)] w-full flex flex-col md:flex-row">
+        <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden bg-gray-100 flex flex-col md:flex-row">
 
-            {/* Dynamic Sidebar Control Panel */}
-            <div className="md:w-80 w-full bg-white border-b md:border-r border-ub-border p-5 z-40 flex flex-col gap-5 shadow-sm md:h-full md:overflow-y-auto shrink-0 relative">
-                <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2"><Filter size={20} className="text-ub-green-medium" /> Public Issue Map</h2>
-                    <p className="text-sm text-ub-text-secondary mt-1">Explore and filter reported civic issues across your region.</p>
-                </div>
-
-                <div className="bg-ub-bg-surface p-4 rounded-xl border border-ub-border flex items-center gap-3">
-                    <Activity size={32} className="text-ub-blue-hero" />
-                    <div>
-                        <div className="text-2xl font-extrabold text-ub-text-primary leading-none">{filtered.length}</div>
-                        <div className="text-xs font-bold uppercase tracking-wider text-ub-text-muted mt-0.5">Pins Found</div>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-ub-text-muted mb-2">Issue Category</label>
-                        <select
-                            value={filterCat} onChange={e => setFilterCat(e.target.value)}
-                            className="w-full border-2 border-ub-border rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-ub-green-medium transition-colors"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="pothole">Potholes</option>
-                            <option value="street_light">Street Lights</option>
-                            <option value="garbage">Garbage / Waste</option>
-                            <option value="water_leak">Water Leaks</option>
-                            <option value="fallen_tree">Fallen Trees</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider text-ub-text-muted mb-2">Resolution Status</label>
-                        <select
-                            value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                            className="w-full border-2 border-ub-border rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-ub-blue-hero transition-colors"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="submitted">Pending / Submitted</option>
-                            <option value="under_review">Under Review / In Progress</option>
-                            <option value="resolved">Resolved</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="mt-auto pt-4 border-t border-ub-border">
-                    <h3 className="font-bold text-xs uppercase text-ub-text-muted tracking-wider mb-3">Map Legend</h3>
-                    <div className="space-y-2">
-                        <div className="flex gap-2.5 items-center text-sm font-semibold">
-                            <span className="w-4 h-4 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: statusColors.resolved }}></span> Resolved
-                        </div>
-                        <div className="flex gap-2.5 items-center text-sm font-semibold">
-                            <span className="w-4 h-4 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: statusColors.under_review }}></span> In Review / Progress
-                        </div>
-                        <div className="flex gap-2.5 items-center text-sm font-semibold">
-                            <span className="w-4 h-4 rounded-full shadow-sm border border-black/10" style={{ backgroundColor: statusColors.submitted }}></span> Pending / Critical
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Leaflet Rendering Engine */}
-            <div className="flex-1 h-full min-h-[400px] z-0">
-                <MapContainer center={[13.0827, 80.2707]} zoom={12} style={{ height: '100%', width: '100%' }}>
+            {/* Leaflet Light Map Engine - FULL SCREEN BACKGROUND */}
+            <div className="absolute inset-0 z-0">
+                <MapContainer center={[13.0827, 80.2707]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                    {/* CartoDB Voyager Light Tiles */}
                     <TileLayer
-                        attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
+                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                     />
+
                     {filtered.map(issue => {
-                        // Validate geometry constraints
                         if (!issue.location?.coordinates || issue.location.coordinates.length < 2) return null;
 
                         return (
@@ -135,29 +90,42 @@ export default function MapPage() {
                                 position={[issue.location.coordinates[1], issue.location.coordinates[0]]}
                                 icon={createIcon(statusColors[issue.status] || '#000')}
                             >
-                                <Popup className="custom-popup" minWidth={240}>
-                                    <div className="p-0.5">
-                                        {/* Render thumbnail safely if Cloudinary array injected */}
-                                        {issue.photos?.[0] && (
-                                            <div className="h-28 w-full rounded-md overflow-hidden bg-gray-100 mb-3 border border-gray-200">
+                                <Popup className="corporate-light-popup" minWidth={280}>
+                                    <div className="bg-white text-gray-900 p-1 -m-4 rounded-xl overflow-hidden border border-gray-200 shadow-2xl">
+                                        {/* Thumbnail Render */}
+                                        {issue.photos?.[0] ? (
+                                            <div className="h-32 w-full bg-gray-100 border-b border-gray-200 relative">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
                                                 <img src={issue.photos[0].url} alt="thumbnail" className="w-full h-full object-cover" />
                                             </div>
+                                        ) : (
+                                            <div className="h-20 w-full bg-blue-50 border-b border-blue-100 flex items-center justify-center">
+                                                <MapIcon size={28} className="text-blue-300" />
+                                            </div>
                                         )}
-                                        <div className="text-[10px] font-extrabold uppercase text-ub-blue-hero mb-1 tracking-wider">{issue.category.replace('_', ' ')}</div>
-                                        <div className="font-bold text-base text-ub-text-primary leading-tight mb-2 pr-2" title={issue.title}>{issue.title}</div>
 
-                                        <div className="flex items-center justify-between mt-4 mb-2">
-                                            <span className="text-[10px] bg-ub-bg-surface px-2.5 py-1 rounded-full border border-ub-border font-bold uppercase tracking-wide">
-                                                {issue.status.replace('_', ' ')}
-                                            </span>
-                                            <span className="flex items-center text-xs font-bold text-ub-green-medium gap-1.5 bg-ub-green-mint px-2 py-0.5 rounded-full">
-                                                <ThumbsUp size={12} strokeWidth={3} /> {issue.upvoteCount}
-                                            </span>
+                                        <div className="p-5 relative z-20 -mt-8">
+                                            <div className="inline-block bg-white shadow-md shadow-black/5 px-2.5 py-1 rounded-md border border-gray-100 text-[9px] font-black uppercase text-ub-blue-hero mb-3 tracking-widest">
+                                                {issue.category.replace('_', ' ')}
+                                            </div>
+
+                                            <div className="font-black text-lg text-gray-900 leading-tight mb-4 line-clamp-2" title={issue.title}>
+                                                {issue.title}
+                                            </div>
+
+                                            <div className="flex items-center justify-between mb-5 border-t border-gray-100 pt-4">
+                                                <span className="text-[9px] bg-gray-50 px-2.5 py-1.5 rounded-md text-gray-600 font-black uppercase tracking-widest border border-gray-200">
+                                                    {issue.status.replace('_', ' ')}
+                                                </span>
+                                                <span className="flex items-center text-[10px] font-black text-ub-green-medium gap-1.5 bg-green-50 px-2.5 py-1.5 rounded-md border border-green-100 shadow-sm shadow-green-100/50">
+                                                    <ThumbsUp size={12} className="text-ub-green-medium" /> {issue.upvoteCount} Votes
+                                                </span>
+                                            </div>
+
+                                            <Link to={`/issue/${issue._id}`} className="block w-full text-center text-xs bg-ub-blue-hero hover:bg-ub-blue-dark text-white font-black uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-[0_5px_15px_rgba(27,63,160,0.2)] hover:shadow-[0_8px_20px_rgba(27,63,160,0.3)] hover:-translate-y-0.5">
+                                                View Report Details
+                                            </Link>
                                         </div>
-
-                                        <Link to={`/issue/${issue._id}`} className="block text-center mt-3 text-sm bg-ub-green-medium text-white font-bold py-2 rounded-lg hover:bg-ub-green-dark transition-colors border border-transparent">
-                                            View Complete Details
-                                        </Link>
                                     </div>
                                 </Popup>
                             </Marker>
@@ -165,6 +133,110 @@ export default function MapPage() {
                     })}
                 </MapContainer>
             </div>
+
+            {/* Overlapping Floating Sidebar */}
+            <div className="absolute top-0 left-0 md:top-6 md:left-6 z-[400] w-full md:w-[420px] h-full md:h-[calc(100%-48px)]">
+                <div className="bg-white/85 backdrop-blur-2xl border border-white/40 md:rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] p-6 md:p-8 flex flex-col h-full overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+
+                    {/* Header */}
+                    <div className="mb-6 relative">
+                        <div className="inline-flex items-center gap-2 bg-blue-50/80 border border-blue-100/50 px-3 py-1.5 rounded-lg text-[9px] font-black tracking-widest uppercase text-ub-blue-hero mb-4 backdrop-blur-sm shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-ub-blue-hero animate-pulse"></span> Network Active
+                        </div>
+                        <h2 className="text-4xl font-black tracking-tighter text-gray-900 mb-1">Live Map</h2>
+                        <p className="text-[11px] text-gray-500 font-bold tracking-widest uppercase">Track Community Issues Real-Time</p>
+                    </div>
+
+                    {/* Active Reports Banner - FIXED ALIGNMENT */}
+                    <div className="bg-gradient-to-r from-blue-50 to-white p-5 rounded-2xl border border-blue-100 shadow-sm flex items-center gap-5 mb-8 group transition-all hover:shadow-md">
+                        <div className="w-14 h-14 bg-white text-ub-blue-hero rounded-xl shadow-sm border border-blue-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <Activity size={26} className="opacity-80" />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                            <div className="text-4xl font-black text-gray-900 leading-none tracking-tighter mb-1">{filtered.length}</div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-ub-blue-hero/80">Active Reports</div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-8 flex-1">
+                        {/* Category Filter Pills */}
+                        <div>
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                                <Filter size={14} /> Category Filter
+                            </label>
+                            <div className="flex flex-wrap gap-2.5">
+                                {CATEGORIES.map(cat => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setFilterCat(cat.id)}
+                                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all duration-300 border ${filterCat === cat.id
+                                                ? 'bg-ub-blue-hero border-ub-blue-hero text-white shadow-[0_4px_12px_rgba(27,63,160,0.25)] scale-105'
+                                                : 'bg-white/60 border-gray-200 text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        {cat.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Status Filter Toggle Array */}
+                        <div>
+                            <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                                <Shield size={14} /> Resolution Status
+                            </label>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                {[
+                                    { id: 'all', label: 'All Status' },
+                                    { id: 'submitted', label: 'Pending' },
+                                    { id: 'under_review', label: 'In Progress' },
+                                    { id: 'resolved', label: 'Resolved' }
+                                ].map(status => (
+                                    <button
+                                        key={status.id}
+                                        onClick={() => setFilterStatus(status.id)}
+                                        className={`px-4 py-3 rounded-xl text-[10px] font-black tracking-wider uppercase transition-all border shadow-sm ${filterStatus === status.id
+                                                ? 'bg-gray-900 border-gray-900 text-white transform scale-[1.02] shadow-[0_4px_12px_rgba(0,0,0,0.15)]'
+                                                : 'bg-white/60 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-white'
+                                            }`}
+                                    >
+                                        {status.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Map Legend */}
+                    <div className="mt-8 pt-6 border-t border-gray-200/60 pb-2">
+                        <h3 className="font-black text-[10px] uppercase text-gray-400 tracking-widest mb-4">Map Legend</h3>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center bg-white/60 px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span className="text-[11px] font-black text-gray-700 tracking-wide uppercase">Resolved</span>
+                                <span className="w-3.5 h-3.5 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.8)]" style={{ backgroundColor: statusColors.resolved }}></span>
+                            </div>
+                            <div className="flex justify-between items-center bg-white/60 px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span className="text-[11px] font-black text-gray-700 tracking-wide uppercase">In Progress</span>
+                                <span className="w-3.5 h-3.5 rounded-full animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.8)]" style={{ backgroundColor: statusColors.under_review }}></span>
+                            </div>
+                            <div className="flex justify-between items-center bg-white/60 px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
+                                <span className="text-[11px] font-black text-gray-700 tracking-wide uppercase">Pending</span>
+                                <span className="w-3.5 h-3.5 rounded-full animate-ping-slow shadow-[0_0_12px_rgba(239,68,68,0.8)]" style={{ backgroundColor: statusColors.submitted }}></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            {/* Floating Live Indicator Top Right */}
+            <div className="absolute top-6 right-6 z-[400] pointer-events-none hidden md:block">
+                <div className="bg-white/90 backdrop-blur-md border border-gray-200 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-xl">
+                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-800">Live View</span>
+                </div>
+            </div>
+
         </div>
     );
 }

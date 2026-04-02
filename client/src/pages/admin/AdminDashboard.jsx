@@ -1,258 +1,374 @@
-import { useState, useEffect } from 'react';
-import api from '../../services/api';
-import { Activity, CheckCircle, Clock, AlertTriangle, ArrowUpRight, Shield, Layers } from 'lucide-react';
-import {
-    Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend
-} from 'chart.js';
-import { Bar, Doughnut } from 'react-chartjs-2';
-import toast from 'react-hot-toast';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+    Activity, CheckCircle, Clock, AlertTriangle,
+    ArrowUpRight, Shield, Layers, Download,
+    TrendingUp, MapPin, Trophy, FileText
+} from 'lucide-react';
+import {
+    Chart as ChartJS,
+    CategoryScale, LinearScale, PointElement,
+    LineElement, BarElement, ArcElement,
+    Title, Tooltip, Legend, Filler
+} from 'chart.js';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import toast from 'react-hot-toast';
+import {
+    DUMMY_STATS,
+    DUMMY_CATEGORY_DATA,
+    DUMMY_AREA_DATA,
+    DUMMY_MONTHLY_TREND,
+    DUMMY_STATUS_BREAKDOWN,
+    DUMMY_ISSUES,
+} from '../../data/dashboardData';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+    CategoryScale, LinearScale, PointElement,
+    LineElement, BarElement, ArcElement,
+    Title, Tooltip, Legend, Filler
+);
 
-export default function AdminDashboard() {
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [issues, setIssues] = useState([]);
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        try {
-            const [statsRes, issuesRes] = await Promise.all([
-                api.get('/admin/stats'),
-                api.get('/admin/issues?limit=5')
-            ]);
-            setStats(statsRes.data);
-            setIssues(issuesRes.data.issues);
-        } catch (err) {
-            toast.error('Failed to sync master database');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleStatusUpdate = async (id, newStatus) => {
-        try {
-            const { data } = await api.patch(`/admin/issues/${id}/status`, { status: newStatus });
-            setIssues(issues.map(i => i._id === id ? data.issue : i));
-            toast.success('Matrix node successfully updated');
-            fetchData();
-        } catch (err) {
-            toast.error('Privilege escalation failed');
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="p-12 w-full h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-gray-200 border-t-ub-blue-hero rounded-full animate-spin"></div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Syncing Master Node...</div>
-                </div>
+function StatCard({ icon: Icon, iconBg, iconColor, value, label, sub }) {
+    return (
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.07)] transition-all flex flex-col relative overflow-hidden group">
+            <div className={`absolute -right-6 -bottom-6 w-32 h-32 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-700 pointer-events-none ${iconBg}`} />
+            <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center mb-5 shadow-inner ${iconBg} ${iconColor}`}>
+                <Icon size={22} strokeWidth={2.5} />
             </div>
-        );
-    }
+            <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-1">{value}</div>
+            {sub && <div className="text-xs font-bold text-green-500 mb-1">{sub}</div>}
+            <div className="text-[10px] uppercase tracking-widest font-black text-gray-400">{label}</div>
+        </div>
+    );
+}
 
-    // Advanced Chart Styling
-    const barOptions = {
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                backgroundColor: '#0A0F1C',
-                titleFont: { size: 10, weight: 800, family: 'sans-serif' },
-                bodyFont: { size: 12, weight: 800, family: 'sans-serif' },
-                padding: 12,
-                cornerRadius: 8,
-                displayColors: false,
-            }
-        },
-        scales: {
-            y: { grid: { borderDash: [4, 4], color: '#f3f4f6' }, border: { display: false }, ticks: { font: { size: 10, weight: 700 } } },
-            x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 9, weight: 800 } } }
-        }
-    };
+function SectionHeader({ title, subtitle, icon: Icon }) {
+    return (
+        <div className="flex items-center gap-3 mb-6">
+            {Icon && <Icon size={20} className="text-ub-blue-hero" />}
+            <div>
+                <h3 className="font-black text-xl text-gray-900">{title}</h3>
+                {subtitle && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{subtitle}</p>}
+            </div>
+        </div>
+    );
+}
 
-    const barData = {
-        labels: ['Potholes', 'Road Light', 'Bio-Waste', 'Water Pipes', 'Fallen Trees', 'Other'],
+// ─── Chart Configs ────────────────────────────────────────────────────────────
+
+const baseTooltip = {
+    backgroundColor: '#0A0F1C',
+    titleFont: { size: 10, weight: 800 },
+    bodyFont: { size: 12, weight: 800 },
+    padding: 12,
+    cornerRadius: 8,
+    displayColors: false,
+};
+
+const baseTicks = { font: { size: 10, weight: 700 } };
+
+function getCategoryBarData() {
+    return {
+        labels: DUMMY_CATEGORY_DATA.labels,
         datasets: [{
-            data: [
-                issues.filter(i => i.category === 'pothole').length * 4 + 10,
-                issues.filter(i => i.category === 'garbage').length * 4 + 12,
-                issues.filter(i => i.category === 'street_light').length * 4 + 8,
-                issues.filter(i => i.category === 'water_leak').length * 4 + 6,
-                issues.filter(i => i.category === 'fallen_tree').length * 4 + 4,
-                2
+            data: DUMMY_CATEGORY_DATA.values,
+            backgroundColor: [
+                '#1B3FA0', '#3B82F6', '#10B981',
+                '#F59E0B', '#EF4444', '#8B5CF6'
             ],
+            borderRadius: 7,
+            barThickness: 36,
+        }]
+    };
+}
+
+function getAreaBarData() {
+    return {
+        labels: DUMMY_AREA_DATA.labels,
+        datasets: [{
+            label: 'Issues Reported',
+            data: DUMMY_AREA_DATA.values,
             backgroundColor: '#1B3FA0',
             hoverBackgroundColor: '#102562',
-            borderRadius: 6,
-            barThickness: 32,
+            borderRadius: 7,
+            barThickness: 30,
         }]
     };
+}
 
-    const pieOptions = {
-        maintainAspectRatio: false,
-        borderWidth: 0,
-        cutout: '75%',
-        plugins: {
-            legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 20, font: { size: 10, weight: 800 } } }
-        }
+function getTrendLineData() {
+    return {
+        labels: DUMMY_MONTHLY_TREND.labels,
+        datasets: [
+            {
+                label: 'Reported',
+                data: DUMMY_MONTHLY_TREND.reported,
+                borderColor: '#1B3FA0',
+                backgroundColor: 'rgba(27,63,160,0.08)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#1B3FA0',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            },
+            {
+                label: 'Resolved',
+                data: DUMMY_MONTHLY_TREND.resolved,
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16,185,129,0.08)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#10B981',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }
+        ]
     };
+}
 
-    const pieData = {
-        labels: ['Resolved', 'In Progress', 'Under Review', 'Pending Critical'],
+function getStatusDoughnutData() {
+    return {
+        labels: DUMMY_STATUS_BREAKDOWN.labels,
         datasets: [{
-            data: [stats.resolvedThisWeek || 20, 15, 10, stats.pending || 5],
-            backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+            data: DUMMY_STATUS_BREAKDOWN.values,
+            backgroundColor: DUMMY_STATUS_BREAKDOWN.colors,
             borderWidth: 0,
-            hoverOffset: 10
+            hoverOffset: 10,
         }]
     };
+}
+
+const barOptions = {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: baseTooltip },
+    scales: {
+        y: { grid: { borderDash: [4, 4], color: '#f3f4f6' }, border: { display: false }, ticks: baseTicks },
+        x: { grid: { display: false }, border: { display: false }, ticks: baseTicks }
+    }
+};
+
+const lineOptions = {
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 10, weight: 700 } } },
+        tooltip: baseTooltip
+    },
+    scales: {
+        y: { grid: { borderDash: [4, 4], color: '#f3f4f6' }, border: { display: false }, ticks: baseTicks },
+        x: { grid: { display: false }, border: { display: false }, ticks: baseTicks }
+    }
+};
+
+const doughnutOptions = {
+    maintainAspectRatio: false,
+    cutout: '72%',
+    plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 16, font: { size: 10, weight: 700 } } },
+        tooltip: baseTooltip,
+    }
+};
+
+// ─── Status badge helper ──────────────────────────────────────────────────────
+const STATUS_STYLES = {
+    resolved:     'bg-green-50 text-green-700 border border-green-200',
+    in_progress:  'bg-blue-50 text-blue-700 border border-blue-200',
+    under_review: 'bg-amber-50 text-amber-700 border border-amber-200',
+    submitted:    'bg-red-50 text-red-700 border border-red-200',
+};
+const STATUS_LABELS = {
+    resolved: 'Resolved', in_progress: 'In Progress',
+    under_review: 'Under Review', submitted: 'Submitted',
+};
+const CAT_EMOJI = {
+    pothole: '🕳️', street_light: '💡', garbage: '🗑️',
+    water_leak: '💧', fallen_tree: '🌳', other: '🌀',
+};
+
+// ─── PDF Export handler (UI only) ─────────────────────────────────────────────
+function handlePDFExport() {
+    toast.success('📄 Report queued for PDF export — Ready for download!', {
+        duration: 3000,
+        style: { background: '#0A0F1C', color: '#fff', fontWeight: 700, fontSize: '13px' }
+    });
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function AdminDashboard() {
+    const stats = DUMMY_STATS;
+    const issues = DUMMY_ISSUES;
+    const [activeTab, setActiveTab] = useState('category'); // 'category' | 'area'
 
     return (
-        <div className="p-8 md:p-12 bg-gray-50 min-h-full font-sans">
-            {/* Header Block */}
+        <div className="p-8 md:p-10 bg-gray-50 min-h-full font-sans">
+
+            {/* ── Header ── */}
             <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <div className="inline-flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-md text-[9px] font-black tracking-widest uppercase text-ub-blue-hero mb-3 shadow-sm border border-blue-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-ub-blue-hero animate-pulse"></span> Production Root
+                        <span className="w-1.5 h-1.5 rounded-full bg-ub-blue-hero animate-pulse" />
+                        Production Root
                     </div>
                     <h1 className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">Matrix Overview</h1>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Real-time macro-analysis of the CivicConnect grid</p>
+                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
+                        Real-time macro-analysis of the CivicConnect grid
+                    </p>
                 </div>
+
+                {/* PDF Export Button */}
+                <button
+                    id="btn-pdf-export"
+                    onClick={handlePDFExport}
+                    className="inline-flex items-center gap-2 bg-ub-blue-hero hover:bg-ub-blue-dark text-white px-5 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(27,63,160,0.35)] hover:shadow-[0_6px_28px_rgba(27,63,160,0.5)] transition-all active:scale-95"
+                >
+                    <Download size={15} />
+                    Download Report
+                </button>
             </div>
 
-            {/* KPI Array */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all flex flex-col relative overflow-hidden group">
-                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-                    <div className="w-12 h-12 rounded-[14px] bg-blue-50 text-ub-blue-hero flex items-center justify-center mb-6 shadow-inner"><Activity size={22} strokeWidth={2.5} /></div>
-                    <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">{stats.total || 0}</div>
-                    <div className="text-[10px] uppercase tracking-widest font-black text-gray-400">Total Infrastructure Logs</div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all flex flex-col relative overflow-hidden group">
-                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-green-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-                    <div className="w-12 h-12 rounded-[14px] bg-green-50 text-green-500 flex items-center justify-center mb-6 shadow-inner"><CheckCircle size={22} strokeWidth={2.5} /></div>
-                    <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">{stats.resolvedThisWeek || 0}</div>
-                    <div className="text-[10px] uppercase tracking-widest font-black text-gray-400">Nodes Resolved</div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all flex flex-col relative overflow-hidden group">
-                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-                    <div className="w-12 h-12 rounded-[14px] bg-amber-50 text-amber-500 flex items-center justify-center mb-6 shadow-inner"><Clock size={22} strokeWidth={2.5} /></div>
-                    <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">{stats.avgResolutionDays || '3.2'} <span className="text-lg text-gray-400">Days</span></div>
-                    <div className="text-[10px] uppercase tracking-widest font-black text-gray-400">Average Dis-Assembly</div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all flex flex-col relative overflow-hidden group">
-                    <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-red-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 pointer-events-none"></div>
-                    <div className="w-12 h-12 rounded-[14px] bg-red-50 text-red-500 flex items-center justify-center mb-6 shadow-inner"><AlertTriangle size={22} strokeWidth={2.5} /></div>
-                    <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">{stats.pending || 0}</div>
-                    <div className="text-[10px] uppercase tracking-widest font-black text-red-400">Critical Pending Actions</div>
-                </div>
+            {/* ── KPI Summary Cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+                <StatCard
+                    icon={Activity}
+                    iconBg="bg-blue-50"
+                    iconColor="text-ub-blue-hero"
+                    value={stats.total}
+                    label="Total Infrastructure Logs"
+                    sub={`+${stats.newThisMonth} this month`}
+                />
+                <StatCard
+                    icon={CheckCircle}
+                    iconBg="bg-green-50"
+                    iconColor="text-green-500"
+                    value={stats.resolved}
+                    label="Nodes Resolved"
+                    sub={`+${stats.resolvedThisWeek} this week`}
+                />
+                <StatCard
+                    icon={AlertTriangle}
+                    iconBg="bg-red-50"
+                    iconColor="text-red-500"
+                    value={stats.pending}
+                    label="Pending Critical Actions"
+                />
+                <StatCard
+                    icon={Clock}
+                    iconBg="bg-amber-50"
+                    iconColor="text-amber-500"
+                    value={`${stats.avgResolutionDays}`}
+                    label="Avg Resolution (Days)"
+                />
             </div>
 
-            {/* Visual Analytics */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            {/* ── Analytics: Trend Line + Doughnut ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                {/* Trend Line Chart */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="font-black text-xl text-gray-900 flex items-center gap-2"><Layers size={20} className="text-ub-blue-hero" /> Category Distribution</h3>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Volume by structural type</p>
+                    <SectionHeader icon={TrendingUp} title="6-Month Issue Trend" subtitle="Reported vs Resolved volume" />
+                    <div className="h-64">
+                        <Line data={getTrendLineData()} options={lineOptions} />
+                    </div>
+                </div>
+
+                {/* Status Doughnut */}
+                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
+                    <SectionHeader icon={Shield} title="Pipeline Status" subtitle="Resolution engine breakdown" />
+                    <div className="h-52 relative">
+                        <Doughnut data={getStatusDoughnutData()} options={doughnutOptions} />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <div className="text-3xl font-black text-gray-900 tracking-tighter">{stats.total}</div>
+                            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total</div>
                         </div>
                     </div>
-                    <div className="h-72"><Bar data={barData} options={barOptions} /></div>
-                </div>
-
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
-                    <div className="text-center mb-4 relative z-10">
-                        <h3 className="font-black text-xl text-gray-900">Pipeline Status</h3>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Resolution Engine</p>
-                    </div>
-                    <div className="h-64 relative z-10 flex justify-center"><Doughnut data={pieData} options={pieOptions} /></div>
-
-                    {/* Center absolute text for doughnut */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-12 z-0">
-                        <div className="text-3xl font-black text-gray-900 tracking-tighter">{stats.total || 0}</div>
-                        <div className="text-[8px] font-black uppercase tracking-widest text-gray-400">Tickets</div>
-                    </div>
                 </div>
             </div>
 
-            {/* Quick Action Matrix Table */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden">
-                <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <div>
-                        <h3 className="font-black text-lg text-gray-900">Live Ticketing Node</h3>
-                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Most recent network alerts</div>
+            {/* ── Analytics: Category & Area Bar Charts (tabbed) ── */}
+            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <SectionHeader icon={Layers} title="Distribution Analysis" subtitle="Volume by category & location" />
+                    <div className="flex gap-2 shrink-0">
+                        <button
+                            id="tab-category"
+                            onClick={() => setActiveTab('category')}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'category' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >
+                            By Category
+                        </button>
+                        <button
+                            id="tab-area"
+                            onClick={() => setActiveTab('area')}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'area' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >
+                            By Area
+                        </button>
                     </div>
-                    <Link to="/admin/issues" className="text-[10px] font-black bg-white border border-gray-200 px-4 py-2 rounded-lg hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1">
-                        View All <ArrowUpRight size={14} />
+                </div>
+                <div className="h-72">
+                    {activeTab === 'category'
+                        ? <Bar data={getCategoryBarData()} options={barOptions} />
+                        : <Bar data={getAreaBarData()} options={barOptions} />
+                    }
+                </div>
+            </div>
+
+            {/* ── Recent Issues Table ── */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden mb-8">
+                <div className="px-8 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                    <div>
+                        <h3 className="font-black text-lg text-gray-900 flex items-center gap-2">
+                            <FileText size={18} className="text-ub-blue-hero" /> Live Ticketing Node
+                        </h3>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Most recent network alerts</div>
+                    </div>
+                    <Link
+                        to="/admin/issues"
+                        className="text-[10px] font-black bg-white border border-gray-200 px-4 py-2 rounded-lg hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1"
+                    >
+                        View All <ArrowUpRight size={13} />
                     </Link>
                 </div>
-
                 <div className="overflow-x-auto p-4">
                     <table className="w-full text-left border-separate border-spacing-y-2">
                         <thead className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
                             <tr>
-                                <th className="px-6 py-3 font-black">Issue Hash / Title</th>
-                                <th className="px-6 py-3 font-black">Submitted By</th>
-                                <th className="px-6 py-3 font-black">Date Logged</th>
-                                <th className="px-6 py-3 font-black text-right">Manual Override</th>
+                                <th className="px-5 py-2">Issue / Title</th>
+                                <th className="px-5 py-2">Reporter</th>
+                                <th className="px-5 py-2 hidden md:table-cell">Area</th>
+                                <th className="px-5 py-2 hidden sm:table-cell">Date</th>
+                                <th className="px-5 py-2 text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm">
                             {issues.map(issue => (
-                                <tr key={issue._id} className="bg-white hover:bg-blue-50/30 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
-                                    <td className="px-6 py-4 rounded-l-2xl">
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-gray-50 w-10 h-10 rounded-xl border border-gray-100 flex flex-col items-center justify-center shrink-0 shadow-inner group-hover:bg-white transition-colors">
-                                                {issue.category === 'pothole' && '🕳️'}
-                                                {issue.category === 'street_light' && '💡'}
-                                                {issue.category === 'garbage' && '🗑️'}
-                                                {issue.category === 'water_leak' && '💧'}
-                                                {issue.category === 'fallen_tree' && '🌳'}
-                                                {issue.category === 'other' && '🌀'}
+                                <tr key={issue.id} className="bg-white hover:bg-blue-50/30 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
+                                    <td className="px-5 py-4 rounded-l-2xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-gray-50 w-9 h-9 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 text-lg">
+                                                {CAT_EMOJI[issue.category] || '🌀'}
                                             </div>
                                             <div>
-                                                <div className="font-black text-[10px] text-ub-blue-hero uppercase tracking-widest mb-0.5">{issue.issueId}</div>
-                                                <div className="font-black text-gray-900 max-w-xs xl:max-w-md truncate">{issue.title}</div>
+                                                <div className="font-black text-[10px] text-ub-blue-hero uppercase tracking-widest">{issue.id}</div>
+                                                <div className="font-bold text-gray-900 text-sm max-w-[200px] truncate">{issue.title}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-bold text-gray-700 bg-gray-50 inline-flex px-3 py-1 rounded-lg border border-gray-100">{issue.reportedBy?.name || 'Citizen User'}</div>
+                                    <td className="px-5 py-4">
+                                        <span className="font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 text-xs">{issue.reporter}</span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-bold text-gray-500">{new Date(issue.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                    <td className="px-5 py-4 hidden md:table-cell">
+                                        <span className="flex items-center gap-1 text-xs font-bold text-gray-500">
+                                            <MapPin size={12} /> {issue.area}
+                                        </span>
                                     </td>
-                                    <td className="px-6 py-4 rounded-r-2xl text-right">
-                                        <div className="inline-block relative">
-                                            <select
-                                                value={issue.status}
-                                                onChange={(e) => handleStatusUpdate(issue._id, e.target.value)}
-                                                className={`appearance-none text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2.5 border-2 outline-none cursor-pointer shadow-sm transition-all
-                                                    ${issue.status === 'resolved' ? 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100' : ''}
-                                                    ${issue.status === 'submitted' ? 'border-red-200 text-red-700 bg-red-50 hover:bg-red-100' : ''}
-                                                    ${issue.status === 'under_review' ? 'border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100' : ''}
-                                                    ${issue.status === 'in_progress' ? 'border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100' : ''}
-                                                    ${issue.status === 'duplicate' ? 'border-gray-200 text-gray-700 bg-gray-50 hover:bg-gray-100' : ''}
-                                                    ${issue.status === 'rejected' ? 'border-gray-300 text-gray-500 bg-gray-100' : ''}
-                                                `}
-                                            >
-                                                <option value="submitted">Submitted (Critical)</option>
-                                                <option value="under_review">Under Review</option>
-                                                <option value="in_progress">In Progress</option>
-                                                <option value="resolved">Mark Resolved</option>
-                                                <option value="duplicate">Flag Duplicate</option>
-                                                <option value="rejected">Reject Node</option>
-                                            </select>
-                                        </div>
+                                    <td className="px-5 py-4 hidden sm:table-cell">
+                                        <span className="text-xs font-bold text-gray-400">{issue.date}</span>
+                                    </td>
+                                    <td className="px-5 py-4 rounded-r-2xl text-right">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${STATUS_STYLES[issue.status]}`}>
+                                            {STATUS_LABELS[issue.status]}
+                                        </span>
                                     </td>
                                 </tr>
                             ))}
@@ -261,6 +377,31 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
+            {/* ── Quick Nav Cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link
+                    to="/admin/leaderboard"
+                    className="flex items-center gap-4 bg-gradient-to-r from-ub-blue-hero to-blue-500 text-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(27,63,160,0.3)] hover:shadow-[0_8px_30px_rgba(27,63,160,0.45)] transition-all hover:scale-[1.02] active:scale-100"
+                >
+                    <Trophy size={28} />
+                    <div>
+                        <div className="font-black text-lg">Citizen Leaderboard</div>
+                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-75 mt-0.5">Top contributor rankings</div>
+                    </div>
+                    <ArrowUpRight size={18} className="ml-auto" />
+                </Link>
+                <button
+                    onClick={handlePDFExport}
+                    className="flex items-center gap-4 bg-white border border-gray-200 text-gray-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all hover:scale-[1.02] active:scale-100"
+                >
+                    <Download size={28} className="text-ub-blue-hero" />
+                    <div className="text-left">
+                        <div className="font-black text-lg">Export Analytics PDF</div>
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Full dashboard report</div>
+                    </div>
+                    <ArrowUpRight size={18} className="ml-auto text-gray-400" />
+                </button>
+            </div>
         </div>
     );
 }

@@ -18,6 +18,7 @@ import AdminIssueDetail from './pages/admin/AdminIssueDetail';
 import AdminMap from './pages/admin/AdminMap';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSidebar from './components/layout/AdminSidebar';
+import LeaderboardPage from './pages/admin/LeaderboardPage';
 
 import { useAuth } from './context/AuthContext';
 
@@ -94,6 +95,7 @@ function App() {
           <Route path="issue/:id" element={<AdminIssueDetail />} />
           <Route path="map" element={<AdminMap />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="leaderboard" element={<LeaderboardPage />} />
         </Route>
       </Routes>
     </Router>

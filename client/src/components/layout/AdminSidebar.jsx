@@ -25,10 +25,10 @@ export default function AdminSidebar() {
                     </div>
                     <div>
                         <div className="font-black text-lg tracking-tight text-white leading-none">
-                            UBAYOG
+                            Civic<span className="text-green-400">Connect</span>
                         </div>
                         <div className="text-[9px] text-ub-blue-hero mt-1 uppercase tracking-widest font-black">
-                            Executive Root
+                            Admin Console
                         </div>
                     </div>
                 </div>

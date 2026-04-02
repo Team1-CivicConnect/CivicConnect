@@ -250,7 +250,7 @@ export default function LandingPage() {
                     </h2>
 
                     <p className="text-gray-500 text-lg font-medium mb-12 max-w-2xl mx-auto">
-                        Connect directly to the Ubayog municipal network. Start logging local fractures and hold infrastructural repair teams mathematically accountable.
+                        Connect directly to your municipal network. Start reporting local issues and hold infrastructure teams accountable with real-time tracking.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-5 justify-center">

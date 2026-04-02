@@ -36,14 +36,14 @@ export default function LoginPage() {
 
             <div className="max-w-md w-full space-y-8 relative z-10 glass bg-white/60 p-10 rounded-3xl shadow-2xl border border-white/40">
                 <div>
-                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-ub-blue-hero to-ub-green-medium rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-lg mb-6">
-                        C
+                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-ub-blue-hero to-[#2563EB] rounded-2xl flex items-center justify-center text-white text-sm font-black shadow-lg mb-6">
+                        CC
                     </div>
                     <h2 className="text-center text-3xl font-black tracking-tight text-gray-900">
-                        Platform Access
+                        Welcome Back
                     </h2>
                     <p className="mt-2 text-center text-sm font-semibold text-gray-500">
-                        Authenticate your Ubayog integration node
+                        Sign in to your CivicConnect account
                     </p>
                 </div>
 
@@ -56,18 +56,18 @@ export default function LoginPage() {
                     )}
                     <div className="space-y-4">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Identity Endpoint (Email)</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Email Address</label>
                             <input
                                 type="email"
                                 required
                                 className="appearance-none rounded-xl block w-full px-4 py-3 border-2 border-gray-200 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-0 focus:border-ub-blue-hero text-sm font-bold transition-colors bg-white/80 backdrop-blur-sm"
-                                placeholder="citizen@ubayog.com"
+                                placeholder="you@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Access Key (Password)</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Password</label>
                             <input
                                 type="password"
                                 required
@@ -86,13 +86,13 @@ export default function LoginPage() {
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                            <span className="flex items-center gap-2">Initiate Handshake <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></span>
+                            <span className="flex items-center gap-2">Sign In <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></span>
                         )}
                     </button>
 
                     <div className="text-center mt-6">
                         <Link to="/register" className="text-xs font-bold text-ub-text-muted hover:text-ub-blue-hero transition-colors">
-                            Don't have a node identity? <span className="underline decoration-2 underline-offset-2">Register Phase</span>
+                            Don't have an account? <span className="underline decoration-2 underline-offset-2">Create one</span>
                         </Link>
                     </div>
                 </form>

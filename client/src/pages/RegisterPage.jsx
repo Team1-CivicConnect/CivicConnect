@@ -16,12 +16,12 @@ export default function RegisterPage() {
         setError('');
         setLoading(true);
         try {
-            if (formData.password.length < 6) throw new Error("Key must exceed 6 bytes");
+            if (formData.password.length < 6) throw new Error("Password must be at least 6 characters");
             await register(formData);
-            toast.success('Identity node constructed! Please authenticate.');
+            toast.success('Account created! Please sign in.');
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Construction failed');
+            setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -39,10 +39,10 @@ export default function RegisterPage() {
                         +
                     </div>
                     <h2 className="text-center text-3xl font-black tracking-tight text-gray-900">
-                        Construct Identity
+                        Create Account
                     </h2>
                     <p className="mt-2 text-center text-sm font-semibold text-gray-500">
-                        Register a new citizen node on the Ubayog grid
+                        Join the CivicConnect community
                     </p>
                 </div>
 
@@ -91,7 +91,7 @@ export default function RegisterPage() {
                             </div>
                         </div>
                         <div className="col-span-2 md:col-span-1 flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Access Key (Password)</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-1">Password</label>
                             <div className="relative">
                                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input
@@ -106,7 +106,7 @@ export default function RegisterPage() {
 
                     <div className="bg-green-50/50 border border-green-100 p-4 rounded-xl text-xs font-semibold text-ub-green-dark">
                         <ShieldAlert size={16} className="inline mr-1 text-ub-green-medium mb-0.5" />
-                        By constructing an identity on the Ubayog Civic platform, you agree to submit transparent, verifiable infrastructure reports tied to your biometric or email footprint.
+                        By creating an account on CivicConnect, you agree to submit accurate infrastructure reports and abide by our community guidelines.
                     </div>
 
                     <button
@@ -116,13 +116,13 @@ export default function RegisterPage() {
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                            <span className="flex items-center gap-2">Initialize Node <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></span>
+                            <span className="flex items-center gap-2">Create Account <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></span>
                         )}
                     </button>
 
                     <div className="text-center mt-6">
                         <Link to="/login" className="text-xs font-bold text-ub-text-muted hover:text-ub-green-medium transition-colors">
-                            Already have an identity? <span className="underline decoration-2 underline-offset-2">Initiate Handshake</span>
+                            Already have an account? <span className="underline decoration-2 underline-offset-2">Sign in</span>
                         </Link>
                     </div>
                 </form>

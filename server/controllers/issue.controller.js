@@ -46,6 +46,7 @@ exports.createIssue = async (req, res, next) => {
         if (user) {
             user.totalReports += 1;
             user.contributionScore += 10;
+            user.recalculateTier();
             await user.save();
         }
 
@@ -154,7 +155,10 @@ exports.toggleUpvote = async (req, res, next) => {
         }
 
         await issue.save();
-        if (reporter) await reporter.save();
+        if (reporter) {
+            reporter.recalculateTier();
+            await reporter.save();
+        }
 
         res.status(200).json({
             message: upvoteIndex > -1 ? 'Upvote removed' : 'Upvote added',

@@ -1,13 +1,13 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import api from '../services/api'; // We will create this
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import api from '../services/api';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser]       = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // ── Bootstrap: load user from stored access token ──────────────────────────
     useEffect(() => {
         const initAuth = async () => {
             try {
@@ -17,8 +17,9 @@ export const AuthProvider = ({ children }) => {
                     setUser(data.user);
                 }
             } catch (err) {
-                console.error('Auth initialization failed', err);
+                // Token invalid / expired — clear it
                 localStorage.removeItem('accessToken');
+                setUser(null);
             } finally {
                 setLoading(false);
             }
@@ -26,33 +27,70 @@ export const AuthProvider = ({ children }) => {
         initAuth();
     }, []);
 
-    const login = async (email, password) => {
+    // ── Login ──────────────────────────────────────────────────────────────────
+    const login = useCallback(async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password });
         localStorage.setItem('accessToken', data.accessToken);
         setUser(data.user);
-        return data;
-    };
+        return data; // caller can check data.user.role
+    }, []);
 
-    const register = async (userData) => {
+    // ── Register ───────────────────────────────────────────────────────────────
+    const register = useCallback(async (userData) => {
         const { data } = await api.post('/auth/register', userData);
-        return data;
-    };
+        return data; // returns { message, email } — no token yet (needs OTP)
+    }, []);
 
-    const logout = async () => {
+    // ── Logout ─────────────────────────────────────────────────────────────────
+    const logout = useCallback(async () => {
         try {
             await api.post('/auth/logout');
         } catch (e) {
-            console.error(e);
+            // Ignore errors on logout
         }
         localStorage.removeItem('accessToken');
         setUser(null);
+    }, []);
+
+    // ── Update user in state (used after profile edits) ────────────────────────
+    const updateUser = useCallback((updatedUser) => {
+        setUser(updatedUser);
+    }, []);
+
+    // ── Refresh access token (called by api interceptor) ──────────────────────
+    const refreshAccessToken = useCallback(async () => {
+        try {
+            const { data } = await api.post('/auth/refresh');
+            localStorage.setItem('accessToken', data.accessToken);
+            return data.accessToken;
+        } catch {
+            localStorage.removeItem('accessToken');
+            setUser(null);
+            return null;
+        }
+    }, []);
+
+    const value = {
+        user,
+        loading,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+        login,
+        register,
+        logout,
+        updateUser,
+        refreshAccessToken,
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const ctx = useContext(AuthContext);
+    if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+    return ctx;
+};

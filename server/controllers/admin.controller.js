@@ -1,5 +1,7 @@
 const Issue = require('../models/Issue.model');
 const User = require('../models/User.model');
+const Notification = require('../models/Notification.model');
+const { sendIssueStatusEmail } = require('../services/email.service');
 
 // Basic stub implementation for admin analytics
 exports.getStats = async (req, res, next) => {
@@ -57,13 +59,45 @@ exports.updateIssueStatus = async (req, res, next) => {
 
         await issue.save();
 
-        // Reward points if resolved
-        if (status === 'resolved') {
-            const reporter = await User.findById(issue.reportedBy);
-            if (reporter) {
+        // Reward points + recalculate tier + send email + create notification
+        const reporter = await User.findById(issue.reportedBy);
+        if (reporter) {
+            if (status === 'resolved') {
                 reporter.contributionScore += 25;
                 reporter.totalResolved += 1;
-                await reporter.save();
+            }
+            reporter.recalculateTier();
+            await reporter.save();
+
+            // 1. In-app notification (shows in bell)
+            const statusLabels = {
+                submitted: 'Submitted',
+                under_review: 'Under Review',
+                in_progress: 'In Progress',
+                resolved: 'Resolved ✓',
+                closed: 'Closed',
+                rejected: 'Rejected'
+            };
+            await Notification.create({
+                userId: reporter._id,
+                type: 'status_change',
+                title: `Issue ${statusLabels[status] || status}`,
+                message: `Your issue "${issue.title}" is now ${statusLabels[status] || status}.`,
+                issueId: issue._id,
+                isRead: false
+            });
+
+            // 2. Email notification
+            try {
+                await sendIssueStatusEmail(
+                    reporter.email,
+                    reporter.name,
+                    issue.title,
+                    issue.issueId,
+                    status
+                );
+            } catch (emailErr) {
+                console.error('Status notification email failed:', emailErr.message);
             }
         }
 

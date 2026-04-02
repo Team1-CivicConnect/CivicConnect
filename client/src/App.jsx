@@ -62,6 +62,7 @@ function App() {
         {/* Public/Citizen Routes */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/map" element={<MapPage />} />

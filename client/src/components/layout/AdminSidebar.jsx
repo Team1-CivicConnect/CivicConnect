@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, AlertCircle, Map as MapIcon, Users, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, AlertCircle, Map as MapIcon, Users, LogOut, Shield, Trophy } from 'lucide-react';
 
 export default function AdminSidebar() {
     const { logout, user } = useAuth();
@@ -11,6 +11,7 @@ export default function AdminSidebar() {
         { name: 'Command Center', path: '/admin/map', icon: MapIcon },
         { name: 'Issue Database', path: '/admin/issues', icon: AlertCircle },
         { name: 'Citizen Registry', path: '/admin/users', icon: Users },
+        { name: 'Leaderboard', path: '/admin/leaderboard', icon: Trophy },
     ];
 
     return (

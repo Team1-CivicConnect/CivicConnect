@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                         <span className="w-1.5 h-1.5 rounded-full bg-ub-blue-hero animate-pulse"></span> Production Root
                     </div>
                     <h1 className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">Matrix Overview</h1>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Real-time macro-analysis of the Ubayog Civic grid</p>
+                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Real-time macro-analysis of the CivicConnect grid</p>
                 </div>
             </div>
 

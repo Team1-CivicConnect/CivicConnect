@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { ShieldCheck, RefreshCw, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, RefreshCw, ArrowLeft, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function VerifyOtpPage() {
     const [digits, setDigits] = useState(['', '', '', '', '', '']);
@@ -81,60 +82,106 @@ export default function VerifyOtpPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 relative overflow-hidden">
-            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-ub-blue-hero rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-blob"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-ub-green-medium rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-blob animation-delay-2000"></div>
+        <motion.div
+            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+            transition={{ duration: 0.4, ease: "circOut" }}
+            className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden font-poppins section-animate"
+        >
+            {/* The WOW Factor: Ultra-Premium Glowing Mesh Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] bg-blue-400 rounded-full mix-blend-multiply opacity-20 filter blur-[150px] animate-[blob_10s_infinite]"></div>
+                <div className="absolute top-[20%] right-[-20%] w-[60vw] h-[60vw] bg-indigo-400 rounded-full mix-blend-multiply opacity-20 filter blur-[150px] animate-[blob_10s_infinite_2s]"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-[50vw] h-[50vw] bg-purple-300 rounded-full mix-blend-multiply opacity-20 filter blur-[150px] animate-[blob_10s_infinite_4s]"></div>
+            </div>
 
-            <div className="max-w-md w-full space-y-8 relative z-10 glass bg-white/60 p-10 rounded-3xl shadow-2xl border border-white/40">
-                <div>
-                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-ub-blue-hero to-ub-green-medium rounded-2xl flex items-center justify-center text-white shadow-lg mb-6">
-                        <ShieldCheck size={30} />
+            {/* Premium Floating Center Island */}
+            <div className="max-w-4xl w-full relative z-10 flex flex-col md:flex-row shadow-[0_40px_100px_rgba(0,0,0,0.08)] rounded-[40px] overflow-hidden bg-white/70 backdrop-blur-2xl border border-white/50">
+
+                {/* Left Art / Visual Panel */}
+                <div className="w-full md:w-5/12 bg-gradient-to-br from-blue-600 to-indigo-900 p-10 lg:p-14 text-white flex flex-col justify-between relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+
+                    {/* Floating Abstract Element */}
+                    <div className="absolute left-[-20%] bottom-[-10%] w-64 h-64 bg-gradient-to-tr from-purple-400 to-transparent rounded-full blur-2xl opacity-40 group-hover:scale-150 transition-transform duration-1000"></div>
+
+                    <div className="relative z-10">
+                        <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 mb-8 shadow-xl">
+                            <ShieldCheck size={28} className="text-white" />
+                        </div>
+                        <h2 className="text-4xl lg:text-4xl font-black tracking-tight leading-[1.1] mb-6">
+                            Secure your<br />Connection.
+                        </h2>
+                        <p className="text-indigo-100 text-sm font-medium leading-relaxed max-w-[280px]">
+                            We require one final step. Verify the access code sent to your network address.
+                        </p>
                     </div>
-                    <h2 className="text-center text-3xl font-black tracking-tight text-gray-900">Verify Identity</h2>
-                    <p className="mt-2 text-center text-sm font-semibold text-gray-500">
-                        OTP dispatched to <span className="text-ub-blue-hero font-black">{email || 'your email'}</span>
-                    </p>
+
+                    <div className="relative z-10 mt-12 bg-white/5 p-5 rounded-3xl border border-white/10 backdrop-blur-sm flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full border-2 border-indigo-400/50 bg-gradient-to-r from-blue-300 to-purple-200 flex items-center justify-center flex-shrink-0">
+                            <ShieldCheck size={20} className="text-indigo-900" />
+                        </div>
+                        <div className="text-xs font-bold text-indigo-200">
+                            <span className="text-white font-black block text-sm">AES-256</span>
+                            End-to-End Encrypted
+                        </div>
+                    </div>
                 </div>
 
-                <form onSubmit={handleVerify} className="space-y-6">
-                    {/* 6-digit boxes */}
-                    <div className="flex gap-3 justify-center" onPaste={handlePaste}>
-                        {digits.map((d, i) => (
-                            <input
-                                key={i}
-                                ref={el => inputRefs.current[i] = el}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={d}
-                                onChange={e => handleChange(i, e.target.value)}
-                                onKeyDown={e => handleKeyDown(i, e)}
-                                className="w-12 h-14 text-center text-2xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:border-ub-blue-hero bg-white/80 transition-colors"
-                            />
-                        ))}
-                    </div>
+                {/* Right Form Panel */}
+                <div className="w-full md:w-7/12 p-10 lg:p-14 bg-white flex flex-col justify-center relative">
+                    <div className="w-full mx-auto max-w-sm">
+                        <h1 className="text-3xl font-black text-gray-900 mb-2">Verify Identity</h1>
+                        <p className="text-gray-500 font-medium mb-10 text-sm">
+                            OTP dispatched to <span className="text-indigo-600 font-bold">{email || 'your email'}</span>
+                        </p>
 
-                    <button
-                        type="submit" disabled={loading}
-                        className="group w-full flex justify-center py-4 px-4 border border-transparent text-sm font-black rounded-xl text-white bg-ub-blue-hero hover:bg-black transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Authenticate Node'}
-                    </button>
+                        <form onSubmit={handleVerify} className="space-y-8">
+                            {/* 6-digit boxes */}
+                            <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+                                {digits.map((d, i) => (
+                                    <input
+                                        key={i}
+                                        ref={el => inputRefs.current[i] = el}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={d}
+                                        onChange={e => handleChange(i, e.target.value)}
+                                        onKeyDown={e => handleKeyDown(i, e)}
+                                        className="w-12 h-14 text-center text-2xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-0 focus:border-indigo-500 bg-gray-50 hover:bg-white focus:bg-white text-gray-900 transition-all shadow-sm focus:shadow-md"
+                                    />
+                                ))}
+                            </div>
 
-                    <div className="text-center space-y-2">
-                        <button
-                            type="button" onClick={handleResend} disabled={!canResend || resendLoading}
-                            className="flex items-center gap-2 mx-auto text-xs font-bold text-ub-text-muted hover:text-ub-blue-hero transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <RefreshCw size={14} className={resendLoading ? 'animate-spin' : ''} />
-                            {canResend ? 'Resend Code' : `Resend in ${countdown}s`}
-                        </button>
-                        <Link to="/register" className="flex items-center gap-1 justify-center text-xs font-bold text-ub-text-muted hover:text-ub-blue-hero transition-colors">
-                            <ArrowLeft size={13} /> Back to Register
-                        </Link>
+                            <button
+                                type="submit" disabled={loading}
+                                className="w-full py-4 bg-gray-900 hover:bg-indigo-600 text-white font-black rounded-2xl transition-all duration-300 shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_30px_rgba(79,70,229,0.3)] hover:-translate-y-1 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:hover:transform-none"
+                            >
+                                {loading ? (
+                                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>Verify Account <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-10 text-center pt-6 border-t border-gray-100 flex flex-col gap-4">
+                            <button
+                                type="button" onClick={handleResend} disabled={!canResend || resendLoading}
+                                className="flex items-center justify-center gap-2 mx-auto text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors disabled:opacity-50 group/btn"
+                            >
+                                <RefreshCw size={16} className={`${resendLoading ? 'animate-spin' : 'group-hover/btn:rotate-180 transition-transform duration-500'}`} />
+                                {canResend ? 'Resend Access Code' : `Resend available in ${countdown}s`}
+                            </button>
+                            <Link to="/register" className="flex items-center gap-1.5 justify-center text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">
+                                <ArrowLeft size={14} /> Abort Verification
+                            </Link>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </motion.div>
     );
 }

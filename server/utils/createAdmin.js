@@ -18,9 +18,10 @@ mongoose.connect(process.env.MONGODB_URI)
             });
             console.log('Admin account successfully injected into Database: admin@ubayog.com / admin123');
         } else {
-            // Force reset password to definitely be admin123 just in case
+            // Force reset password and ensure verified
             const adminHash = await bcrypt.hash('admin123', 12);
             admin.passwordHash = adminHash;
+            admin.isVerified = true;
             await admin.save();
             console.log('Admin account password reset successfully: admin@ubayog.com / admin123');
         }

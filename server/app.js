@@ -57,7 +57,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
     .then(() => {
         console.log('Connected to MongoDB');
-        
+
         // Priority recalculation on startup & cron
         const cron = require('node-cron');
         const { recalculateAllPriorities } = require('./utils/priorityEngine');
@@ -71,3 +71,5 @@ mongoose.connect(process.env.MONGODB_URI, {
     .catch((err) => {
         console.error('MongoDB connection error:', err);
     });
+
+// Loaded new email env variables

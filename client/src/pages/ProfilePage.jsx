@@ -3,6 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     User, Award, CheckCircle, Clock, MapPin, Settings,
     LogOut, X, Save, Lock, Eye, EyeOff, Phone,
@@ -11,16 +12,16 @@ import {
 } from 'lucide-react';
 
 const TIER_CONFIG = {
-    bronze: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-300', label: 'Bronze', emoji: '🥉', next: 75 },
-    silver: { color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-300', label: 'Silver', emoji: '🥈', next: 200 },
-    gold: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-300', label: 'Gold', emoji: '🥇', next: 500 },
-    platinum: { color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-300', label: 'Platinum', emoji: '💎', next: null },
+    bronze: { color: 'text-amber-700', bg: 'bg-amber-500/10', border: 'border-amber-300/50', label: 'Bronze', emoji: '🥉', next: 75 },
+    silver: { color: 'text-gray-600', bg: 'bg-gray-500/10', border: 'border-gray-300/50', label: 'Silver', emoji: '🥈', next: 200 },
+    gold: { color: 'text-yellow-600', bg: 'bg-yellow-500/10', border: 'border-yellow-300/50', label: 'Gold', emoji: '🥇', next: 500 },
+    platinum: { color: 'text-purple-600', bg: 'bg-purple-500/10', border: 'border-purple-300/50', label: 'Platinum', emoji: '💎', next: null },
 };
 
 const getActivityIcon = (status) => {
     switch (status) {
-        case 'resolved': return <CheckCheck size={14} className="text-green-600" />;
-        case 'in_progress': return <Loader size={14} className="text-blue-600" />;
+        case 'resolved': return <CheckCheck size={14} className="text-emerald-600" />;
+        case 'in_progress': return <Loader size={14} className="text-ub-blue-hero" />;
         case 'under_review': return <AlertCircle size={14} className="text-amber-600" />;
         default: return <FileText size={14} className="text-gray-500" />;
     }
@@ -37,11 +38,26 @@ const getActivityLabel = (status) => {
 
 const getActivityColor = (status) => {
     switch (status) {
-        case 'resolved': return 'bg-green-50 border-green-200';
-        case 'in_progress': return 'bg-blue-50 border-blue-200';
-        case 'under_review': return 'bg-amber-50 border-amber-200';
-        default: return 'bg-gray-50 border-gray-200';
+        case 'resolved': return 'bg-emerald-50/50 border-emerald-200/50';
+        case 'in_progress': return 'bg-blue-50/50 border-blue-200/50';
+        case 'under_review': return 'bg-amber-50/50 border-amber-200/50';
+        default: return 'bg-gray-50/50 border-gray-200/50';
     }
+};
+
+// Animation Variants
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: { staggerChildren: 0.1 }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
 
 // ── Avatar Upload ─────────────────────────────────────────────────────────────
@@ -73,12 +89,12 @@ function AvatarUpload({ user, onUpdate }) {
     };
 
     return (
-        <div className="relative inline-block">
-            <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-4 border-white shadow-lg shadow-blue-200">
+        <div className="relative inline-block group">
+            <div className="w-24 h-24 mx-auto rounded-[1rem] sm:rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 border-white/50 shadow-xl transition-transform group-hover:scale-105 duration-300">
                 {user?.avatar ? (
                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-ub-blue-hero to-blue-500 flex items-center justify-center text-white text-3xl font-bold">
+                    <div className="w-full h-full bg-gradient-to-br from-ub-blue-hero to-teal-400 flex items-center justify-center text-white text-4xl font-black">
                         {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                 )}
@@ -86,11 +102,11 @@ function AvatarUpload({ user, onUpdate }) {
             <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="absolute bottom-0 right-0 w-7 h-7 bg-ub-blue-hero hover:bg-black text-white rounded-full flex items-center justify-center shadow-md transition-colors disabled:opacity-70"
+                className="absolute -bottom-2 -right-2 w-9 h-9 bg-ub-blue-hero hover:bg-[#1B3FA0] text-white rounded-xl flex items-center justify-center shadow-lg transition-colors disabled:opacity-70 border-2 border-white"
             >
                 {uploading
-                    ? <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
-                    : <Camera size={12} />
+                    ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    : <Camera size={16} />
                 }
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -126,32 +142,44 @@ function EditProfileModal({ user, onClose, onSave }) {
     ];
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Edit Profile</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><X size={20} /></button>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {fields.map(({ id, label, type, icon: Icon, placeholder }) => (
-                        <div key={id} className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">{label}</label>
-                            <div className="relative">
-                                <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input type={type} value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })} placeholder={placeholder}
-                                    className="w-full pl-9 pr-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-ub-blue-hero transition-colors" />
-                            </div>
-                        </div>
-                    ))}
-                    <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
-                        <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl bg-ub-blue-hero text-white text-sm font-bold hover:bg-black transition-colors disabled:opacity-70 flex items-center justify-center gap-2">
-                            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save size={14} /> Save</>}
-                        </button>
+        <AnimatePresence>
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="bg-white/95 backdrop-blur-2xl rounded-[30px] border border-white/50 shadow-[0_40px_100px_rgba(0,0,0,0.15)] w-full max-w-md p-8 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-ub-blue-hero/10 rounded-bl-full filter blur-xl"></div>
+
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Edit Profile</h3>
+                        <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors"><X size={18} /></button>
                     </div>
-                </form>
+
+                    <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+                        {fields.map(({ id, label, type, icon: Icon, placeholder }) => (
+                            <div key={id} className="relative group/input">
+                                <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-ub-blue-hero transition-colors" />
+                                <input type={type} id={id} required={id === 'name'}
+                                    value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })}
+                                    className="peer w-full pl-11 pr-4 pb-2.5 pt-6 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
+                                    placeholder={placeholder} />
+                                <label htmlFor={id} className="absolute left-11 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-[10px] peer-focus:text-ub-blue-hero peer-focus:font-black peer-focus:uppercase tracking-widest pointer-events-none">
+                                    {label}
+                                </label>
+                            </div>
+                        ))}
+                        <div className="flex gap-4 pt-4">
+                            <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-2xl font-black text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                            <button type="submit" disabled={loading} className="flex-1 py-3.5 rounded-2xl bg-gray-900 hover:bg-ub-blue-hero text-white font-black shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 flex items-center justify-center gap-2">
+                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save size={16} /> Save Changes</>}
+                            </button>
+                        </div>
+                    </form>
+                </motion.div>
             </div>
-        </div>
+        </AnimatePresence>
     );
 }
 
@@ -178,72 +206,84 @@ function ChangePasswordModal({ onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-black text-gray-900">Change Password</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><X size={20} /></button>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {[
-                        { id: 'currentPassword', label: 'Current Password', showKey: 'current' },
-                        { id: 'newPassword', label: 'New Password', showKey: 'new' },
-                        { id: 'confirmPassword', label: 'Confirm Password', showKey: 'confirm' },
-                    ].map(({ id, label, showKey }) => (
-                        <div key={id} className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">{label}</label>
-                            <div className="relative">
-                                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input type={show[showKey] ? 'text' : 'password'} value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })} placeholder="••••••••" required
-                                    className="w-full pl-9 pr-10 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-ub-blue-hero transition-colors" />
-                                <button type="button" onClick={() => setShow(s => ({ ...s, [showKey]: !s[showKey] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                    {show[showKey] ? <EyeOff size={15} /> : <Eye size={15} />}
+        <AnimatePresence>
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    className="bg-white/95 backdrop-blur-2xl rounded-[30px] border border-white/50 shadow-[0_40px_100px_rgba(0,0,0,0.15)] w-full max-w-md p-8 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-bl-full filter blur-xl"></div>
+
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <h3 className="text-2xl font-black text-gray-900 tracking-tight">Security</h3>
+                        <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl transition-colors"><X size={18} /></button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+                        {[
+                            { id: 'currentPassword', label: 'Current Password', showKey: 'current' },
+                            { id: 'newPassword', label: 'New Password', showKey: 'new' },
+                            { id: 'confirmPassword', label: 'Confirm Password', showKey: 'confirm' },
+                        ].map(({ id, label, showKey }) => (
+                            <div key={id} className="relative group/input">
+                                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-ub-blue-hero transition-colors" />
+                                <input type={show[showKey] ? 'text' : 'password'} id={id} required
+                                    value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })}
+                                    className="peer w-full pl-11 pr-12 pb-2.5 pt-6 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
+                                    placeholder={label} />
+                                <label htmlFor={id} className="absolute left-11 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-[10px] peer-focus:text-ub-blue-hero peer-focus:font-black peer-focus:uppercase tracking-widest pointer-events-none">
+                                    {label}
+                                </label>
+                                <button type="button" onClick={() => setShow(s => ({ ...s, [showKey]: !s[showKey] }))} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+                                    {show[showKey] ? <EyeOff size={14} /> : <Eye size={14} />}
                                 </button>
                             </div>
+                        ))}
+                        <div className="flex gap-4 pt-4">
+                            <button type="button" onClick={onClose} className="flex-1 py-3.5 rounded-2xl font-black text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                            <button type="submit" disabled={loading} className="flex-1 py-3.5 rounded-2xl bg-gray-900 hover:bg-emerald-600 text-white font-black shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 flex items-center justify-center gap-2">
+                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Update Password'}
+                            </button>
                         </div>
-                    ))}
-                    <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" disabled={loading} className="flex-1 py-2.5 rounded-xl bg-ub-blue-hero text-white text-sm font-bold hover:bg-black disabled:opacity-70 flex items-center justify-center gap-2">
-                            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Update Password'}
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </motion.div>
             </div>
-        </div>
+        </AnimatePresence>
     );
 }
 
 // ── Activity Timeline ─────────────────────────────────────────────────────────
 function ActivityTimeline({ issues }) {
     if (issues.length === 0) return (
-        <div className="text-center py-8 text-ub-text-muted">
-            <Clock size={32} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No activity yet</p>
+        <div className="text-center py-12 text-gray-400 bg-white/30 rounded-2xl border border-dashed border-gray-300">
+            <Clock size={32} className="mx-auto mb-3 opacity-50" />
+            <p className="text-sm font-bold">No activity yet</p>
+            <p className="text-xs font-semibold mt-1 opacity-70">Start reporting issues to build your timeline.</p>
         </div>
     );
 
     const sorted = [...issues].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 8);
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
             {sorted.map((issue, idx) => (
                 <Link to={`/issue/${issue._id}`} key={issue._id}>
-                    <div className={`flex items-start gap-3 p-3 rounded-xl border transition-all hover:shadow-sm ${getActivityColor(issue.status)}`}>
+                    <motion.div variants={itemVariants} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all hover:shadow-lg bg-white/60 hover:bg-white backdrop-blur-sm ${getActivityColor(issue.status)} group`}>
                         <div className="flex flex-col items-center shrink-0 mt-0.5">
-                            <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
+                            <div className="w-8 h-8 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                                 {getActivityIcon(issue.status)}
                             </div>
-                            {idx < sorted.length - 1 && <div className="w-px h-4 bg-gray-200 mt-1" />}
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-gray-700 truncate">{issue.title}</p>
-                            <p className="text-[10px] text-gray-500 mt-0.5">
-                                {getActivityLabel(issue.status)} · {new Date(issue.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        <div className="flex-1 min-w-0 pt-0.5">
+                            <p className="text-sm font-black text-gray-900 truncate group-hover:text-ub-blue-hero transition-colors">{issue.title}</p>
+                            <p className="text-xs font-semibold text-gray-500 mt-1 uppercase tracking-wider">
+                                {getActivityLabel(issue.status)} <span className="opacity-50">·</span> {new Date(issue.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </p>
                         </div>
-                        <ChevronRight size={14} className="text-gray-400 shrink-0 mt-1" />
-                    </div>
+                        <ChevronRight size={16} className="text-gray-400 shrink-0 mt-2 group-hover:translate-x-1 transition-transform" />
+                    </motion.div>
                 </Link>
             ))}
         </div>
@@ -288,7 +328,7 @@ export default function ProfilePage() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'resolved': return 'bg-green-50 text-green-700 border-green-200';
+            case 'resolved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             case 'submitted': return 'bg-red-50 text-red-700 border-red-200';
             case 'in_progress': return 'bg-blue-50 text-blue-700 border-blue-200';
             default: return 'bg-amber-50 text-amber-700 border-amber-200';
@@ -302,158 +342,208 @@ export default function ProfilePage() {
     const tier = TIER_CONFIG[stats.tier] || TIER_CONFIG.bronze;
 
     if (loading) return (
-        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-ub-blue-hero/20 border-t-ub-blue-hero rounded-full animate-spin" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="w-12 h-12 border-4 border-ub-blue-hero/20 border-t-ub-blue-hero rounded-full animate-spin" />
         </div>
     );
 
     return (
-        <div className="bg-ub-bg-surface min-h-[calc(100vh-64px)] py-8 px-4 md:px-8">
+        <div className="min-h-screen bg-slate-50 relative overflow-hidden font-poppins pt-20 pb-16 px-4 md:px-8">
+            {/* Ultra-Premium Glowing Mesh Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-ub-blue-hero/20 rounded-full mix-blend-multiply filter blur-[150px] animate-[blob_10s_infinite]"></div>
+                <div className="absolute top-[20%] right-[-10%] w-[50vw] h-[50vw] bg-emerald-400/20 rounded-full mix-blend-multiply filter blur-[150px] animate-[blob_10s_infinite_2s]"></div>
+                <div className="absolute bottom-[-10%] left-[20%] w-[40vw] h-[40vw] bg-teal-300/20 rounded-full mix-blend-multiply filter blur-[150px] animate-[blob_10s_infinite_4s]"></div>
+                <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
+            </div>
+
             {showEdit && <EditProfileModal user={user} onClose={() => setShowEdit(false)} onSave={updateUser} />}
             {showPassword && <ChangePasswordModal onClose={() => setShowPassword(false)} />}
 
-            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10"
+            >
+                {/* Left Card - Profile Summary */}
+                <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
+                    <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.06)] rounded-[30px] p-8 text-center relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-ub-blue-hero to-teal-400 opacity-90 rounded-t-[30px]"></div>
 
-                {/* Left Card */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="ub-card text-center !pt-8 !pb-6 border-t-4 border-ub-blue-hero">
-
-                        {/* Feature 1: Avatar Upload */}
-                        <div className="mb-4 flex justify-center">
+                        <div className="relative pt-12 mb-6">
                             <AvatarUpload user={user} onUpdate={updateUser} />
                         </div>
 
-                        <h2 className="text-xl font-extrabold text-ub-text-primary mb-1">{user?.name}</h2>
-                        <p className="text-sm text-ub-text-secondary mb-1">{user?.email}</p>
-                        {user?.phone && <p className="text-sm text-ub-text-secondary mb-2">{user?.phone}</p>}
-                        <div className="text-sm text-ub-text-secondary flex items-center justify-center gap-1.5 mb-2">
-                            <MapPin size={14} /> {user?.ward || 'Ward'}, {user?.area || 'Area'}
-                        </div>
+                        <h2 className="text-2xl font-black text-gray-900 mb-1 tracking-tight">{user?.name}</h2>
+                        <p className="text-sm font-semibold text-gray-500 mb-2">{user?.email}</p>
 
-                        {/* Feature 3: Member Since */}
-                        <div className="flex items-center justify-center gap-1.5 text-xs text-ub-text-muted mb-4">
+                        {(user?.ward || user?.area || user?.phone) && (
+                            <div className="flex flex-col items-center gap-2 mt-4 mb-6">
+                                {user?.phone && (
+                                    <div className="text-xs font-bold text-gray-600 bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                                        <Phone size={12} className="text-ub-blue-hero" /> {user?.phone}
+                                    </div>
+                                )}
+                                {(user?.ward || user?.area) && (
+                                    <div className="text-xs font-bold text-gray-600 bg-white shadow-sm border border-gray-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                                        <MapPin size={12} className="text-emerald-500" /> {user?.ward || 'Ward'}, {user?.area || 'Area'}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
                             <Calendar size={12} />
-                            <span>Member since <strong>{memberSince}</strong></span>
+                            <span>Member since {memberSince}</span>
                         </div>
 
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold mb-4 ${tier.bg} ${tier.border} ${tier.color}`}>
-                            {tier.emoji} {tier.label} Member
-                        </div>
-
-                        <div className="flex flex-col gap-2 px-2">
-                            <button onClick={() => setShowEdit(true)} className="text-xs font-bold text-ub-text-secondary bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                                <Settings size={14} /> Edit Profile
+                        <div className="flex flex-col gap-3 mt-8">
+                            <button onClick={() => setShowEdit(true)} className="py-3.5 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl text-sm font-black tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                                <Settings size={16} /> Edit Profile
                             </button>
-                            <button onClick={() => setShowPassword(true)} className="text-xs font-bold text-ub-blue-hero bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                                <Lock size={14} /> Change Password
-                            </button>
-                            <button onClick={handleLogout} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                                <LogOut size={14} /> Logout
-                            </button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setShowPassword(true)} className="py-3 bg-white border border-gray-200 hover:border-ub-blue-hero text-gray-700 hover:text-ub-blue-hero rounded-2xl text-[11px] font-black uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                                    <Lock size={14} /> Security
+                                </button>
+                                <button onClick={handleLogout} className="py-3 bg-red-50 border border-red-100 hover:bg-red-500 hover:text-white hover:border-red-500 text-red-600 rounded-2xl text-[11px] font-black uppercase tracking-wide transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                                    <LogOut size={14} /> Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Score Card */}
-                    <div className="ub-card !p-5 bg-gradient-to-br from-ub-green-medium to-green-700 text-white border-none text-center">
-                        <Award size={36} className="mx-auto text-yellow-300 mb-3" />
-                        <div className="text-3xl font-black mb-1">{stats.score}</div>
-                        <div className="text-xs uppercase tracking-widest font-bold opacity-90">Contribution Score</div>
-                        {tier.next && (
-                            <div className="mt-3">
-                                <div className="text-[10px] opacity-70 mb-1">{tier.next - stats.score} pts to next tier</div>
-                                <div className="w-full bg-white/20 rounded-full h-1.5">
-                                    <div className="bg-yellow-300 h-1.5 rounded-full" style={{ width: `${Math.min((stats.score / tier.next) * 100, 100)}%` }} />
-                                </div>
-                            </div>
-                        )}
-                        <p className="text-[10px] mt-3 opacity-80 leading-tight">Earn points by reporting and resolving civic issues.</p>
-                    </div>
-                </div>
+                    <div className="bg-gradient-to-br from-[#0F2460] to-teal-800 rounded-[30px] p-8 text-white relative overflow-hidden shadow-[0_20px_40px_rgba(15,36,96,0.2)]">
+                        <div className="absolute right-[-20%] top-[-10%] w-48 h-48 bg-gradient-to-tr from-emerald-400 to-transparent rounded-full blur-2xl opacity-40"></div>
 
-                {/* Right Content */}
-                <div className="lg:col-span-3">
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="ub-card !p-4 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-blue-50 text-ub-blue-hero flex items-center justify-center shrink-0"><Clock size={24} /></div>
-                            <div>
-                                <div className="text-2xl font-black text-ub-text-primary leading-none mb-1">{stats.reported}</div>
-                                <div className="text-xs font-bold text-ub-text-muted uppercase tracking-wider">Total Reports</div>
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center mb-4">
+                                <Award size={32} className="text-yellow-300" />
                             </div>
-                        </div>
-                        <div className="ub-card !p-4 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-green-50 text-ub-green-medium flex items-center justify-center shrink-0"><CheckCircle size={24} /></div>
-                            <div>
-                                <div className="text-2xl font-black text-ub-text-primary leading-none mb-1">{stats.resolved}</div>
-                                <div className="text-xs font-bold text-ub-text-muted uppercase tracking-wider">Resolved Issues</div>
+
+                            <div className="text-5xl font-black mb-1 drop-shadow-md">{stats.score}</div>
+                            <div className="text-xs uppercase tracking-widest font-bold text-blue-100 mb-6">Contribution Score</div>
+
+                            <div className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full border mb-6 text-sm font-black shadow-inner bg-white/10 border-white/20 text-white backdrop-blur-sm`}>
+                                {tier.emoji} {tier.label} Tier
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-4">
-                        {[
-                            { key: 'reports', label: 'My Reports', icon: User },
-                            { key: 'timeline', label: 'Activity Timeline', icon: Clock },
-                        ].map(({ key, label, icon: Icon }) => (
-                            <button key={key} onClick={() => setActiveTab(key)}
-                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === key ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-white text-ub-text-muted hover:bg-gray-50 border border-ub-border'}`}>
-                                <Icon size={14} /> {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Tab Content */}
-                    {activeTab === 'reports' ? (
-                        <div className="space-y-4">
-                            {issues.length === 0 ? (
-                                <div className="ub-card !py-12 text-center text-ub-text-muted">
-                                    <div className="text-4xl mb-3">🌍</div>
-                                    <p>You haven't reported any civic issues yet.</p>
-                                    <Link to="/report" className="mt-4 inline-block btn-primary text-sm">Report an Issue Now</Link>
-                                </div>
-                            ) : (
-                                issues.map(issue => (
-                                    <Link to={`/issue/${issue._id}`} key={issue._id} className="block group">
-                                        <div className="ub-card !p-5 hover:border-ub-blue-hero transition-colors flex flex-col md:flex-row gap-5 items-start md:items-center">
-                                            {issue.photos?.[0] ? (
-                                                <div className="w-full md:w-32 md:h-24 rounded-lg overflow-hidden shrink-0 border border-ub-border">
-                                                    <img src={issue.photos[0].url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={issue.title} />
-                                                </div>
-                                            ) : (
-                                                <div className="w-full md:w-32 h-20 md:h-24 rounded-lg bg-gray-100 border border-ub-border flex flex-col items-center justify-center shrink-0 text-ub-text-muted text-xs">
-                                                    <MapPin size={20} className="mb-1" /> No Photo
-                                                </div>
-                                            )}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[10px] font-bold tracking-wider uppercase text-ub-text-muted">{new Date(issue.createdAt).toLocaleDateString()}</span>
-                                                    <span className="text-[10px] font-mono text-ub-blue-hero bg-blue-50 px-1.5 py-0.5 rounded">{issue.issueId}</span>
-                                                </div>
-                                                <h3 className="text-lg font-bold text-ub-text-primary truncate group-hover:text-ub-blue-hero transition-colors">{issue.title}</h3>
-                                                <div className="text-sm text-ub-text-secondary mt-1 truncate">{issue.description}</div>
-                                            </div>
-                                            <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between gap-2 shrink-0">
-                                                <span className={`text-[10px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-full border ${getStatusColor(issue.status)}`}>
-                                                    {issue.status.replace('_', ' ')}
-                                                </span>
-                                                <ChevronRight size={16} className="text-gray-400 hidden md:block" />
-                                            </div>
+                            {tier.next && (
+                                <div className="w-full bg-black/20 rounded-2xl p-4 border border-white/10 backdrop-blur-md">
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2 text-blue-100">
+                                        <span>Current Phase</span>
+                                        <span>{tier.next - stats.score} pts to {Object.values(TIER_CONFIG).find(t => t.next > tier.next)?.label || 'Next'}</span>
+                                    </div>
+                                    <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden shadow-inner">
+                                        <div className="bg-gradient-to-r from-emerald-400 to-teal-300 h-full rounded-full relative" style={{ width: `${Math.min((stats.score / tier.next) * 100, 100)}%` }}>
+                                            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                                         </div>
-                                    </Link>
-                                ))
+                                    </div>
+                                </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="ub-card !p-5">
-                            <h3 className="text-sm font-black text-ub-text-primary mb-4 flex items-center gap-2">
-                                <Clock size={16} className="text-ub-blue-hero" /> Recent Activity
-                            </h3>
-                            <ActivityTimeline issues={issues} />
+                    </div>
+                </motion.div>
+
+                {/* Right Content */}
+                <motion.div variants={itemVariants} className="lg:col-span-8 space-y-6">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.06)] rounded-[30px] p-6 lg:p-8 flex items-center gap-6 relative overflow-hidden group">
+                            <div className="w-16 h-16 rounded-2xl bg-blue-50/80 text-ub-blue-hero flex items-center justify-center shrink-0 border border-blue-100 group-hover:scale-110 transition-transform duration-300"><Clock size={32} /></div>
+                            <div>
+                                <div className="text-4xl font-black text-gray-900 leading-none mb-2">{stats.reported}</div>
+                                <div className="text-xs font-black text-gray-500 uppercase tracking-widest">Total Reports</div>
+                            </div>
+                            <div className="absolute right-[-10%] bottom-[-20%] opacity-5 text-gray-900 group-hover:scale-150 transition-transform duration-500"><Clock size={160} /></div>
                         </div>
-                    )}
-                </div>
-            </div>
+                        <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.06)] rounded-[30px] p-6 lg:p-8 flex items-center gap-6 relative overflow-hidden group">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-50/80 text-emerald-500 flex items-center justify-center shrink-0 border border-emerald-100 group-hover:scale-110 transition-transform duration-300"><CheckCircle size={32} /></div>
+                            <div>
+                                <div className="text-4xl font-black text-gray-900 leading-none mb-2">{stats.resolved}</div>
+                                <div className="text-xs font-black text-gray-500 uppercase tracking-widest">Resolved Issues</div>
+                            </div>
+                            <div className="absolute right-[-10%] bottom-[-20%] opacity-5 text-emerald-900 group-hover:scale-150 transition-transform duration-500"><CheckCircle size={160} /></div>
+                        </div>
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.06)] rounded-[30px] p-6 lg:p-8 relative min-h-[500px]">
+
+                        {/* Tabs */}
+                        <div className="flex bg-gray-100/50 p-1 rounded-2xl backdrop-blur-md mb-8 inline-flex">
+                            {[
+                                { key: 'reports', label: 'My Reports', icon: FileText },
+                                { key: 'timeline', label: 'Timeline', icon: Clock },
+                            ].map(({ key, label, icon: Icon }) => (
+                                <button key={key} onClick={() => setActiveTab(key)}
+                                    className={`px-6 py-2.5 rounded-[12px] text-sm font-black transition-all flex items-center gap-2 tracking-wide ${activeTab === key ? 'bg-white text-ub-blue-hero shadow-sm border border-gray-200/50' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'}`}>
+                                    <Icon size={16} /> {label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="relative">
+                            {activeTab === 'reports' ? (
+                                <motion.div variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="space-y-4">
+                                    {issues.length === 0 ? (
+                                        <div className="py-16 text-center bg-white/40 rounded-[20px] border border-dashed border-gray-300">
+                                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FileText size={28} className="text-ub-blue-hero opacity-50" />
+                                            </div>
+                                            <h3 className="text-lg font-black text-gray-900 mb-1">No reports found</h3>
+                                            <p className="text-gray-500 font-semibold text-sm mb-6 max-w-sm mx-auto">You haven't reported any civic issues yet. Take the first step towards improving your community.</p>
+                                            <Link to="/report" className="inline-flex py-3 px-8 bg-gray-900 hover:bg-ub-blue-hero text-white text-sm font-black rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">Submit an Issue</Link>
+                                        </div>
+                                    ) : (
+                                        issues.map(issue => (
+                                            <Link to={`/issue/${issue._id}`} key={issue._id} className="block group">
+                                                <motion.div variants={itemVariants} className="bg-white/80 p-4 lg:p-5 hover:bg-white border border-white shadow-sm hover:shadow-xl hover:shadow-blue-900/5 hover:-translate-y-1 transition-all rounded-[20px] flex flex-col md:flex-row gap-5 items-start md:items-center">
+                                                    {issue.photos?.[0] ? (
+                                                        <div className="w-full md:w-36 md:h-28 rounded-2xl overflow-hidden shrink-0 border border-gray-100 shadow-sm relative">
+                                                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
+                                                            <img src={issue.photos[0].url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={issue.title} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full md:w-36 h-24 md:h-28 rounded-2xl bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0 text-gray-400 font-bold text-xs uppercase tracking-widest shadow-inner">
+                                                            <MapPin size={24} className="mb-2 opacity-50" /> No Photo
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex-1 min-w-0 pr-4">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="text-[10px] font-black tracking-widest uppercase text-gray-400 flex items-center gap-1"><Calendar size={12} /> {new Date(issue.createdAt).toLocaleDateString()}</span>
+                                                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                            <span className="text-[10px] font-mono font-black tracking-wider text-ub-blue-hero bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{issue.issueId}</span>
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-gray-900 truncate group-hover:text-ub-blue-hero transition-colors mb-1">{issue.title}</h3>
+                                                        <div className="text-sm font-semibold text-gray-500 truncate">{issue.description}</div>
+                                                    </div>
+
+                                                    <div className="w-full md:w-auto flex md:flex-col items-center md:items-end justify-between gap-3 shrink-0">
+                                                        <span className={`text-[10px] uppercase tracking-widest font-black px-4 py-1.5 rounded-xl border ${getStatusColor(issue.status)} shadow-sm`}>
+                                                            {issue.status.replace('_', ' ')}
+                                                        </span>
+                                                        <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center group-hover:bg-ub-blue-hero group-hover:text-white transition-colors">
+                                                            <ChevronRight size={16} className="text-gray-400 group-hover:text-white" />
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            </Link>
+                                        ))
+                                    )}
+                                </motion.div>
+                            ) : (
+                                <motion.div variants={containerVariants} initial="hidden" animate="show" exit="hidden" className="max-w-2xl">
+                                    <ActivityTimeline issues={issues} />
+                                </motion.div>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+            </motion.div>
         </div>
     );
 }

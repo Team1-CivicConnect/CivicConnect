@@ -159,7 +159,15 @@ export default function Navbar() {
     ];
 
     const isDarkPage = location.pathname === '/';
+    const isRegister = location.pathname === '/register';
     const textColor = isScrolled ? 'text-gray-900' : (isDarkPage ? 'text-white' : 'text-gray-900');
+
+    // Dynamic Theme Variables dependent on current page
+    const themeText = isRegister ? 'text-emerald-600' : 'text-ub-blue-hero';
+    const themeHoverText = isRegister ? 'hover:text-emerald-600' : 'hover:text-ub-blue-hero';
+    const themeGradient = isRegister ? 'from-emerald-500 to-teal-500' : 'from-ub-blue-hero to-[#2563EB]';
+    const themeHoverBorder = isRegister ? 'hover:border-emerald-500' : 'hover:border-[#1B3FA0]';
+    const shadowColor = isRegister ? 'shadow-[0_8px_20px_rgba(16,185,129,0.3)]' : 'shadow-[0_8px_20px_rgba(27,63,160,0.3)]';
 
     return (
         <>
@@ -169,13 +177,14 @@ export default function Navbar() {
                     <div className="flex items-center gap-6">
                         <Link to="/" className="flex items-center gap-3 group">
                             <div className="relative">
-                                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-ub-blue-hero via-[#2563EB] to-ub-green-medium flex items-center justify-center text-white font-black text-sm shadow-lg group-hover:shadow-[0_4px_20px_rgba(27,63,160,0.4)] group-hover:scale-110 transition-all duration-300">
+                                {/* Only animate scale, keep the original logo colors to maintain brand memory or we can swap as well */}
+                                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${isRegister ? 'from-emerald-500 to-teal-500' : 'from-ub-blue-hero via-[#2563EB] to-ub-green-medium'} flex items-center justify-center text-white font-black text-sm shadow-lg group-hover:shadow-[0_4px_20px_rgba(27,63,160,0.4)] group-hover:scale-110 transition-all duration-300`}>
                                     CC
                                 </div>
                                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
                             </div>
                             <div className={`font-black text-xl tracking-tight transition-colors duration-300 ${textColor}`}>
-                                Civic<span className={`${isScrolled ? 'text-ub-blue-hero' : (isDarkPage ? 'text-green-400' : 'text-ub-blue-hero')}`}>Connect</span>
+                                Civic<span className={`${isScrolled ? themeText : (isDarkPage ? 'text-green-400' : themeText)}`}>Connect</span>
                             </div>
                         </Link>
 
@@ -185,7 +194,7 @@ export default function Navbar() {
                                     key={link.name}
                                     to={link.path}
                                     className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all ${location.pathname === link.path
-                                        ? (isScrolled || !isDarkPage ? 'bg-white text-ub-blue-hero shadow-sm' : 'bg-white/20 text-white shadow-sm')
+                                        ? (isScrolled || !isDarkPage ? `bg-white ${themeText} shadow-sm` : 'bg-white/20 text-white shadow-sm')
                                         : (isScrolled || !isDarkPage ? 'text-gray-400 hover:text-gray-900 hover:bg-white/70' : 'text-white/60 hover:text-white hover:bg-white/10')
                                         }`}
                                 >
@@ -203,7 +212,7 @@ export default function Navbar() {
                                 <div className="relative">
                                     <button
                                         onClick={() => setShowNotifications(!showNotifications)}
-                                        className={`relative p-2 rounded-xl transition-all hover:scale-105 ${isScrolled || !isDarkPage ? 'text-gray-500 hover:bg-gray-100 hover:text-ub-blue-hero' : 'text-white/70 hover:text-white hover:bg-white/10'}`}
+                                        className={`relative p-2 rounded-xl transition-all hover:scale-105 ${isScrolled || !isDarkPage ? `text-gray-500 hover:bg-gray-100 ${themeHoverText}` : 'text-white/70 hover:text-white hover:bg-white/10'}`}
                                     >
                                         <Bell size={20} />
                                         {unreadCount > 0 && (
@@ -221,13 +230,13 @@ export default function Navbar() {
                                 {/* Profile */}
                                 <Link
                                     to={user.role === 'admin' ? '/admin' : '/profile'}
-                                    className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 transition-all hover:scale-[1.02] ${isScrolled || !isDarkPage ? 'border-gray-200 hover:border-ub-blue-hero bg-white shadow-sm' : 'border-white/20 hover:border-white/40 text-white bg-white/10 backdrop-blur-lg'}`}
+                                    className={`flex items-center gap-2.5 px-3.5 py-2 rounded-xl border-2 transition-all hover:scale-[1.02] ${isScrolled || !isDarkPage ? `border-gray-200 ${themeHoverBorder} bg-white shadow-sm` : 'border-white/20 hover:border-white/40 text-white bg-white/10 backdrop-blur-lg'}`}
                                 >
                                     <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-ub-blue-hero to-ub-green-medium text-white flex items-center justify-center text-[10px] font-black shadow-inner">
                                         {user.name.charAt(0)}
                                     </div>
                                     <span className="text-sm font-black">{user.name.split(' ')[0]}</span>
-                                    {user.role === 'admin' && <ShieldCheck size={14} className="text-ub-blue-hero" />}
+                                    {user.role === 'admin' && <ShieldCheck size={14} className={themeText} />}
                                 </Link>
 
                                 <button
@@ -239,10 +248,10 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="hidden md:flex items-center gap-4">
-                                <Link to="/login" className={`text-sm font-black transition-colors ${isScrolled || !isDarkPage ? 'text-gray-500 hover:text-ub-blue-hero' : 'text-white/80 hover:text-white'}`}>
+                                <Link to="/login" className={`text-sm font-black transition-colors ${isScrolled || !isDarkPage ? `text-gray-500 ${themeHoverText}` : 'text-white/80 hover:text-white'}`}>
                                     Sign In
                                 </Link>
-                                <Link to="/report" className="bg-gradient-to-r from-ub-blue-hero to-[#2563EB] text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:shadow-[0_8px_20px_rgba(27,63,160,0.3)] hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                                <Link to="/report" className={`bg-gradient-to-r ${themeGradient} text-white px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:${shadowColor} hover:-translate-y-0.5 transition-all flex items-center gap-2`}>
                                     Report Issue <ArrowRight size={14} />
                                 </Link>
                             </div>
@@ -264,7 +273,7 @@ export default function Navbar() {
                     <div className="flex flex-col gap-2">
                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Navigation</div>
                         {links.map((link) => (
-                            <Link key={link.name} to={link.path} className={`text-3xl font-black py-2 ${location.pathname === link.path ? 'text-ub-blue-hero' : 'text-gray-800'}`}>
+                            <Link key={link.name} to={link.path} className={`text-3xl font-black py-2 ${location.pathname === link.path ? themeText : 'text-gray-800'}`}>
                                 {link.name}
                             </Link>
                         ))}
@@ -278,14 +287,14 @@ export default function Navbar() {
                                     <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-ub-blue-hero to-ub-green-medium text-white flex items-center justify-center text-lg font-black shadow-lg">{user.name.charAt(0)}</div>
                                     <div>
                                         <div className="font-black text-xl text-gray-900 leading-tight">{user.name}</div>
-                                        <div className="text-[10px] font-black text-ub-blue-hero uppercase tracking-widest">{user.role}</div>
+                                        <div className={`text-[10px] font-black ${themeText} uppercase tracking-widest`}>{user.role}</div>
                                     </div>
                                 </Link>
 
                                 {/* Mobile Notifications */}
                                 <Link to="/profile" className="flex items-center justify-between w-full py-3 px-4 bg-white rounded-xl border border-gray-200 mb-3">
                                     <div className="flex items-center gap-2">
-                                        <Bell size={16} className="text-ub-blue-hero" />
+                                        <Bell size={16} className={themeText} />
                                         <span className="text-sm font-bold text-gray-700">Notifications</span>
                                     </div>
                                     {unreadCount > 0 && (
@@ -299,7 +308,7 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3">
-                                <Link to="/report" className="w-full bg-gradient-to-r from-ub-blue-hero to-[#2563EB] text-white py-4 rounded-xl font-black text-center text-lg shadow-lg flex items-center justify-center gap-2">
+                                <Link to="/report" className={`w-full bg-gradient-to-r ${themeGradient} text-white py-4 rounded-xl font-black text-center text-lg shadow-lg flex items-center justify-center gap-2`}>
                                     Report Issue <ArrowRight size={20} />
                                 </Link>
                                 <Link to="/login" className="w-full bg-gray-100 text-gray-900 py-4 rounded-xl font-black text-center text-lg">

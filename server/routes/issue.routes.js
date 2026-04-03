@@ -16,6 +16,7 @@ router.get('/:id', issueController.getIssueById);
 router.post('/', authenticate, upload.array('photos', 5), issueController.createIssue);
 router.post('/:id/upvote', authenticate, issueController.toggleUpvote);
 router.patch('/:id', authenticate, issueController.updateIssue);
+router.post('/:id/feedback', authenticate, issueController.submitResolutionFeedback);
 router.delete('/:id', authenticate, issueController.deleteIssue);
 
 module.exports = router;

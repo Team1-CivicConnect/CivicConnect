@@ -64,6 +64,8 @@ const issueSchema = new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         approvedAt: Date
     }],
+    resolutionRating: { type: Number, min: 1, max: 5 },
+    resolutionFeedback: { type: String, maxlength: 500 },
 }, { timestamps: true });
 
 issueSchema.index({ location: '2dsphere' });

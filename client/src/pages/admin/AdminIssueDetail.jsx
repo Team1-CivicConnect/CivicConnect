@@ -156,6 +156,30 @@ export default function AdminIssueDetail() {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Resolution Critique (Feedback Loop) */}
+                            {issue.resolutionRating && (
+                                <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-100">
+                                    <h3 className="text-xs font-black uppercase tracking-widest text-ub-green-medium mb-4 flex items-center gap-2">
+                                        <ShieldCheck size={16} /> Citizen Resolution Critique
+                                    </h3>
+                                    <div className="bg-ub-green-medium/5 border-2 border-ub-green-medium/20 rounded-2xl p-6">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <span key={star} className={`text-lg ${star <= issue.resolutionRating ? 'grayscale-0' : 'grayscale opacity-20'}`}>⭐</span>
+                                                ))}
+                                            </div>
+                                            <span className="text-xs font-black text-ub-green-dark ml-2">SCORE: {issue.resolutionRating}/5</span>
+                                        </div>
+                                        {issue.resolutionFeedback && (
+                                            <p className="text-sm font-bold text-ub-green-dark italic leading-relaxed">
+                                                "{issue.resolutionFeedback}"
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

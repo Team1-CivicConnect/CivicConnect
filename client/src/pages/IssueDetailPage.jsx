@@ -37,6 +37,11 @@ export default function IssueDetailPage() {
     const [volSubmitting, setVolSubmitting] = useState(false);
     const [approvedVolunteerCount, setApprovedVolunteerCount] = useState(0);
 
+    // Feedback state
+    const [rating, setRating] = useState(0);
+    const [feedback, setFeedback] = useState('');
+    const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+
     const handleDownloadPdf = async () => {
         setPdfLoading(true);
         try {
@@ -94,6 +99,21 @@ export default function IssueDetailPage() {
             setComments([...comments, { ...data.comment, author: { _id: user.id, name: user.name, avatar: user.avatar } }]);
             setNewComment('');
         } catch (err) { toast.error('Communication line dropped'); }
+    };
+
+    const handleFeedbackSubmit = async (e) => {
+        e.preventDefault();
+        if (rating < 1) return toast.error('Please select a star rating');
+        setFeedbackSubmitting(true);
+        try {
+            const { data } = await api.post(`/issues/${id}/feedback`, { rating, feedback });
+            setIssue(data.issue);
+            toast.success('Thank you for your feedback!');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to submit feedback');
+        } finally {
+            setFeedbackSubmitting(false);
+        }
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 font-black text-gray-400 tracking-widest uppercase">Fetching Logic...</div>;
@@ -327,6 +347,79 @@ export default function IssueDetailPage() {
                                         </div>
                                     )}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Resolution Feedback Section */}
+                    {issue.status === 'resolved' && (
+                        <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-100 p-8">
+                            <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                                <div className="w-10 h-10 bg-green-50 text-green-500 rounded-xl flex items-center justify-center border border-green-100"><ShieldCheck size={20} /></div>
+                                <h2 className="text-xl font-black text-gray-900 tracking-tight">Resolution Quality</h2>
+                            </div>
+
+                            {issue.resolutionRating ? (
+                                <div className="bg-green-50 border border-green-100 rounded-2xl p-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex gap-1">
+                                            {[1, 2, 3, 4, 5].map(star => (
+                                                <span key={star} className={`text-xl ${star <= issue.resolutionRating ? 'grayscale-0' : 'grayscale'}`}>⭐</span>
+                                            ))}
+                                        </div>
+                                        <span className="text-xs font-black text-green-700 uppercase tracking-widest ml-2">Score: {issue.resolutionRating}/5</span>
+                                    </div>
+                                    {issue.resolutionFeedback && (
+                                        <p className="text-sm font-medium text-green-800 italic leading-relaxed">
+                                            "{issue.resolutionFeedback}"
+                                        </p>
+                                    )}
+                                    <div className="mt-4 text-[9px] font-black uppercase tracking-widest text-green-600/60">Verified Community Feedback</div>
+                                </div>
+                            ) : (
+                                user && user.id === issue.reportedBy?._id ? (
+                                    <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+                                        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                                            <p className="text-sm font-bold text-gray-700 mb-4">How satisfied are you with the resolution of this issue?</p>
+                                            <div className="flex gap-4">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setRating(star)}
+                                                        className={`text-3xl transition-transform hover:scale-120 active:scale-95 ${rating >= star ? 'grayscale-0' : 'grayscale opacity-30 hover:opacity-100'}`}
+                                                    >
+                                                        ⭐
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Additional Feedback (Optional)</label>
+                                            <textarea
+                                                className="w-full border-2 border-gray-200 bg-gray-50 rounded-xl p-4 text-sm font-medium focus:outline-none focus:border-green-400 focus:bg-white transition-colors shadow-inner"
+                                                placeholder="e.g. The cleanup was thorough, thank you!"
+                                                rows="3"
+                                                value={feedback}
+                                                onChange={e => setFeedback(e.target.value)}
+                                                maxLength="500"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={feedbackSubmitting || rating === 0}
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest shadow-lg shadow-green-100 transition-all active:scale-95 disabled:opacity-50"
+                                        >
+                                            {feedbackSubmitting ? 'Analyzing...' : 'Submit Resolution Feedback'}
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <div className="text-center py-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest italic">Awaiting feedback from the original reporter.</p>
+                                    </div>
+                                )
                             )}
                         </div>
                     )}

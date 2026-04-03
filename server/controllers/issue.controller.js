@@ -169,6 +169,32 @@ exports.toggleUpvote = async (req, res, next) => {
     }
 };
 
+exports.submitResolutionFeedback = async (req, res, next) => {
+    try {
+        const { rating, feedback } = req.body;
+        const issue = await Issue.findById(req.params.id);
+
+        if (!issue) return res.status(404).json({ message: 'Ticket not found' });
+        if (issue.reportedBy.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Only the original reporter can provide feedback' });
+        }
+        if (issue.status !== 'resolved') {
+            return res.status(400).json({ message: 'Feedback can only be provided for resolved issues' });
+        }
+        if (issue.resolutionRating) {
+            return res.status(400).json({ message: 'Feedback already submitted' });
+        }
+
+        issue.resolutionRating = rating;
+        issue.resolutionFeedback = feedback;
+        await issue.save();
+
+        res.status(200).json({ message: 'Thank you for your feedback!', issue });
+    } catch (err) {
+        next(err);
+    }
+};
+
 exports.updateIssue = async (req, res, next) => {
     res.status(501).json({ message: 'Not Implemented Yet' });
 };

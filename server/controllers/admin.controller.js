@@ -179,7 +179,7 @@ exports.getLeaderboard = async (req, res, next) => {
         const topUsers = await User.find({ role: 'citizen' }) // Optionally filter by citizen
             .sort({ contributionScore: -1 })
             .limit(50)
-            .select('name email ward area contributionScore totalResolved reputationTier');
+            .select('name email ward area contributionScore totalReports totalResolved reputationTier');
 
         let rank = 1;
         const leaderboard = topUsers.map((u, index) => {
@@ -194,7 +194,7 @@ exports.getLeaderboard = async (req, res, next) => {
                 rank: rank++,
                 name: u.name,
                 area: u.area || u.ward || 'Unknown City',
-                reports: u.totalResolved || 0, // Since we only track totalResolved directly, or we could aggregate Issues
+                reports: u.totalReports || 0,
                 resolved: u.totalResolved || 0,
                 streak: Math.floor(Math.random() * 15), // Mock streak for UI
                 score: u.contributionScore || 0,

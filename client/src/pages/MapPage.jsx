@@ -72,7 +72,7 @@ export default function MapPage() {
     });
 
     return (
-        <div className="relative h-[calc(100vh-64px)] w-full overflow-hidden bg-gray-100 flex flex-col md:flex-row">
+        <div className="relative h-[calc(100vh-80px)] w-full overflow-hidden bg-gray-100 flex flex-col md:flex-row">
 
             {/* Leaflet Light Map Engine - FULL SCREEN BACKGROUND */}
             <div className="absolute inset-0 z-0">

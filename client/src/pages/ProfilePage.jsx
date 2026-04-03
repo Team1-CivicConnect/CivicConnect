@@ -163,9 +163,9 @@ function EditProfileModal({ user, onClose, onSave }) {
                                 <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-ub-blue-hero transition-colors" />
                                 <input type={type} id={id} required={id === 'name'}
                                     value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })}
-                                    className="peer w-full pl-11 pr-4 pb-2.5 pt-6 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
+                                    className="peer w-full pl-11 pr-4 pb-2.5 pt-7 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
                                     placeholder={placeholder} />
-                                <label htmlFor={id} className="absolute left-11 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-[10px] peer-focus:text-ub-blue-hero peer-focus:font-black peer-focus:uppercase tracking-widest pointer-events-none">
+                                <label htmlFor={id} className="absolute left-11 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
                                     {label}
                                 </label>
                             </div>
@@ -231,9 +231,9 @@ function ChangePasswordModal({ onClose }) {
                                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-ub-blue-hero transition-colors" />
                                 <input type={show[showKey] ? 'text' : 'password'} id={id} required
                                     value={form[id]} onChange={e => setForm({ ...form, [id]: e.target.value })}
-                                    className="peer w-full pl-11 pr-12 pb-2.5 pt-6 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
+                                    className="peer w-full pl-11 pr-12 pb-2.5 pt-7 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
                                     placeholder={label} />
-                                <label htmlFor={id} className="absolute left-11 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-[10px] peer-focus:text-ub-blue-hero peer-focus:font-black peer-focus:uppercase tracking-widest pointer-events-none">
+                                <label htmlFor={id} className="absolute left-11 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
                                     {label}
                                 </label>
                                 <button type="button" onClick={() => setShow(s => ({ ...s, [showKey]: !s[showKey] }))} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">

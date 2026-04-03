@@ -149,11 +149,11 @@ export default function LoginPage() {
                                 <motion.div variants={itemVariants} className="relative group/input">
                                     <input
                                         type="email" id="email" required
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
+                                        className="peer w-full px-5 pt-7 pb-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold placeholder-transparent"
                                         placeholder="Email address"
                                         value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     />
-                                    <label htmlFor="email" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-ub-blue-hero peer-focus:font-bold pointer-events-none">
+                                    <label htmlFor="email" className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
                                         Email address
                                     </label>
                                 </motion.div>
@@ -162,11 +162,11 @@ export default function LoginPage() {
                                 <motion.div variants={itemVariants} className="relative group/input">
                                     <input
                                         type="password" id="password" required
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold tracking-wider placeholder-transparent"
+                                        className="peer w-full px-5 pt-7 pb-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 transition-all font-bold tracking-wider placeholder-transparent"
                                         placeholder="Password"
                                         value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     />
-                                    <label htmlFor="password" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-ub-blue-hero peer-focus:font-bold pointer-events-none">
+                                    <label htmlFor="password" className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
                                         Password
                                     </label>
                                 </motion.div>

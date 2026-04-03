@@ -171,7 +171,7 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-white/90 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.04)] border-b border-gray-100 py-3' : 'bg-transparent py-5'}`}>
+            <nav className={`fixed top-0 w-full z-[1000] transition-all duration-500 ${isScrolled ? 'bg-white/90 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.04)] border-b border-gray-100 py-3' : 'bg-transparent py-5'}`}>
                 <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
 
                     <div className="flex items-center gap-6">

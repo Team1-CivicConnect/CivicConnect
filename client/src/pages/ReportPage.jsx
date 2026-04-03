@@ -192,20 +192,24 @@ export default function ReportPage() {
                                     <div className="relative group">
                                         <input
                                             maxLength="100" placeholder=" "
-                                            className="block px-5 pb-3 pt-6 w-full text-sm font-bold text-gray-900 bg-white border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:border-ub-blue-hero peer shadow-sm transition-colors"
+                                            className="peer w-full px-5 pt-7 pb-2.5 text-sm font-bold text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 outline-none shadow-sm transition-all placeholder-transparent"
                                             value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
                                         />
-                                        <label className="absolute text-[10px] font-black tracking-widest text-gray-400 uppercase duration-300 transform -translate-y-2.5 scale-75 top-4 z-10 origin-[0] left-5 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-2.5 peer-focus:text-ub-blue-hero">Issue Title</label>
+                                        <label className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
+                                            Issue Title
+                                        </label>
                                         <div className="absolute top-4 right-5 text-[9px] font-black text-gray-300">{formData.title.length}/100</div>
                                     </div>
 
                                     <div className="relative group">
                                         <textarea
                                             maxLength="800" rows="4" placeholder=" "
-                                            className="block px-5 pb-3 pt-6 w-full text-sm font-bold text-gray-900 bg-white border-2 border-gray-200 rounded-xl appearance-none focus:outline-none focus:border-ub-blue-hero peer shadow-sm transition-colors resize-none"
+                                            className="peer w-full px-5 pt-7 pb-2.5 text-sm font-bold text-gray-900 bg-white border border-gray-200 rounded-xl focus:border-ub-blue-hero focus:ring-4 focus:ring-blue-50 outline-none shadow-sm transition-all resize-none placeholder-transparent"
                                             value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
                                         />
-                                        <label className="absolute text-[10px] font-black tracking-widest text-gray-400 uppercase duration-300 transform -translate-y-2.5 scale-75 top-4 z-10 origin-[0] left-5 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-2.5 peer-focus:text-ub-blue-hero">Detailed Description</label>
+                                        <label className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-6 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-ub-blue-hero">
+                                            Detailed Description
+                                        </label>
                                         <div className="absolute top-4 right-5 text-[9px] font-black text-gray-300">{formData.description.length}/800</div>
                                     </div>
                                 </div>

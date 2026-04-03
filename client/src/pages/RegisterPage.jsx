@@ -1,9 +1,59 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { MapPin, User, Mail, Lock, ShieldAlert, ArrowRight, Check } from 'lucide-react';
+import { MapPin, User, Mail, Lock, ShieldAlert, ArrowRight, Check, ChevronDown, Search } from 'lucide-react';
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+
+// Comprehensive list of Major Indian Cities and States
+const INDIA_LOCATIONS = [
+    // Tier 1 Cities
+    "Ahmedabad, Gujarat", "Bengaluru, Karnataka", "Chennai, Tamil Nadu", 
+    "Delhi, NCR", "Hyderabad, Telangana", "Kolkata, West Bengal", 
+    "Mumbai, Maharashtra", "Pune, Maharashtra",
+    
+    // Major Tier 2 & Tier 3 Cities (Alphabetical)
+    "Agra, Uttar Pradesh", "Ajmer, Rajasthan", "Aligarh, Uttar Pradesh", 
+    "Allahabad, Uttar Pradesh", "Amravati, Maharashtra", "Amritsar, Punjab", 
+    "Asansol, West Bengal", "Aurangabad, Maharashtra", "Bareilly, Uttar Pradesh", 
+    "Belagavi, Karnataka", "Bhavnagar, Gujarat", "Bhilai, Chhattisgarh", 
+    "Bhiwandi, Maharashtra", "Bhopal, Madhya Pradesh", "Bhubaneswar, Odisha", 
+    "Bikaner, Rajasthan", "Chandigarh", "Coimbatore, Tamil Nadu", 
+    "Cuttack, Odisha", "Dehradun, Uttarakhand", "Dhanbad, Jharkhand", 
+    "Durgapur, West Bengal", "Erode, Tamil Nadu", "Faridabad, Haryana", 
+    "Firozabad, Uttar Pradesh", "Ghaziabad, Uttar Pradesh", "Gorakhpur, Uttar Pradesh", 
+    "Gulbarga, Karnataka", "Guntur, Andhra Pradesh", "Gurgaon, Haryana", 
+    "Guwahati, Assam", "Gwalior, Madhya Pradesh", "Hubli-Dharwad, Karnataka", 
+    "Indore, Madhya Pradesh", "Jabalpur, Madhya Pradesh", "Jaipur, Rajasthan", 
+    "Jalandhar, Punjab", "Jalgaon, Maharashtra", "Jammu, Jammu & Kashmir", 
+    "Jamnagar, Gujarat", "Jamshedpur, Jharkhand", "Jhansi, Uttar Pradesh", 
+    "Jodhpur, Rajasthan", "Kakinada, Andhra Pradesh", "Kannur, Kerala", 
+    "Kanpur, Uttar Pradesh", "Kochi, Kerala", "Kolhapur, Maharashtra", 
+    "Kollam, Kerala", "Kota, Rajasthan", "Kozhikode, Kerala", 
+    "Kurnool, Andhra Pradesh", "Lucknow, Uttar Pradesh", "Ludhiana, Punjab", 
+    "Madurai, Tamil Nadu", "Malappuram, Kerala", "Mangalore, Karnataka", 
+    "Mathura, Uttar Pradesh", "Meerut, Uttar Pradesh", "Moradabad, Uttar Pradesh", 
+    "Mysore, Karnataka", "Nagpur, Maharashtra", "Nanded, Maharashtra", 
+    "Nashik, Maharashtra", "Nellore, Andhra Pradesh", "Noida, Uttar Pradesh", 
+    "Patna, Bihar", "Pondicherry, Puducherry", "Raipur, Chhattisgarh", 
+    "Rajahmundry, Andhra Pradesh", "Rajkot, Gujarat", "Ranchi, Jharkhand", 
+    "Rourkela, Odisha", "Salem, Tamil Nadu", "Sangli, Maharashtra", 
+    "Shimla, Himachal Pradesh", "Siliguri, West Bengal", "Solapur, Maharashtra", 
+    "Srinagar, Jammu & Kashmir", "Surat, Gujarat", "Thiruvananthapuram, Kerala", 
+    "Thrissur, Kerala", "Tiruchirappalli, Tamil Nadu", "Tirunelveli, Tamil Nadu", 
+    "Tiruppur, Tamil Nadu", "Ujjain, Madhya Pradesh", "Vadodara, Gujarat", 
+    "Varanasi, Uttar Pradesh", "Vasai-Virar, Maharashtra", "Vellore, Tamil Nadu", 
+    "Vijayawada, Andhra Pradesh", "Visakhapatnam, Andhra Pradesh", "Warangal, Telangana",
+    
+    // States and Union Territories (if user just wants to select a broader region)
+    "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", 
+    "Assam", "Bihar", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", 
+    "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", 
+    "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", 
+    "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", 
+    "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
 
 // Animation Variants for Waterfall Effect
 const containerVariants = {
@@ -21,10 +71,32 @@ const itemVariants = {
 
 export default function RegisterPage() {
     const [formData, setFormData] = useState({ name: '', email: '', password: '', ward: '', area: '' });
+    const [wardSearch, setWardSearch] = useState('');
+    const [showWardDropdown, setShowWardDropdown] = useState(false);
+    const wardRef = useRef(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { register } = useAuth();
     const navigate = useNavigate();
+
+    // Click outside to close the ward dropdown
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (wardRef.current && !wardRef.current.contains(e.target)) {
+                setShowWardDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Filtered locations for autocomplete
+    const filteredLocations = useMemo(() => {
+        if (!wardSearch.trim()) return INDIA_LOCATIONS;
+        return INDIA_LOCATIONS.filter(loc =>
+            loc.toLowerCase().includes(wardSearch.toLowerCase())
+        );
+    }, [wardSearch]);
 
     // Password Strength Math
     const calculateStrength = (pwd) => {
@@ -146,11 +218,11 @@ export default function RegisterPage() {
                                 <motion.div variants={itemVariants} className="relative group/input col-span-2 sm:col-span-1">
                                     <input
                                         type="text" id="name" required
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
+                                        className="peer w-full px-5 pt-7 pb-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
                                         placeholder="Full Name"
                                         value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     />
-                                    <label htmlFor="name" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-emerald-500 peer-focus:font-bold pointer-events-none">
+                                    <label htmlFor="name" className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-emerald-500">
                                         Full Name
                                     </label>
                                 </motion.div>
@@ -159,37 +231,90 @@ export default function RegisterPage() {
                                 <motion.div variants={itemVariants} className="relative group/input col-span-2 sm:col-span-1">
                                     <input
                                         type="email" id="email" required
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
+                                        className="peer w-full px-5 pt-7 pb-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
                                         placeholder="Email address"
                                         value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     />
-                                    <label htmlFor="email" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-emerald-500 peer-focus:font-bold pointer-events-none">
+                                    <label htmlFor="email" className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-emerald-500">
                                         Email address
                                     </label>
                                 </motion.div>
 
-                                {/* Floating Label Input: Ward */}
-                                <motion.div variants={itemVariants} className="relative group/input col-span-2 sm:col-span-1">
-                                    <input
-                                        type="text" id="ward"
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
-                                        placeholder="Ward Assignment"
-                                        value={formData.ward} onChange={(e) => setFormData({ ...formData, ward: e.target.value })}
-                                    />
-                                    <label htmlFor="ward" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-emerald-500 peer-focus:font-bold pointer-events-none">
-                                        Ward Assignment
-                                    </label>
+                                {/* Searchable Ward Autocomplete */}
+                                <motion.div variants={itemVariants} className="relative group/input col-span-2 sm:col-span-1" ref={wardRef}>
+                                    <div className="relative">
+                                        <input
+                                            type="text" id="ward" autoComplete="off"
+                                            className="peer w-full px-5 pt-7 pb-2.5 pr-10 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold placeholder-transparent"
+                                            placeholder="Ward Assignment"
+                                            value={showWardDropdown ? wardSearch : formData.ward}
+                                            onFocus={() => {
+                                                setShowWardDropdown(true);
+                                                setWardSearch(formData.ward);
+                                            }}
+                                            onChange={(e) => {
+                                                setWardSearch(e.target.value);
+                                                setShowWardDropdown(true);
+                                                if (!e.target.value) {
+                                                    setFormData({ ...formData, ward: '' });
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="ward" className={`absolute left-5 pointer-events-none transition-all ${formData.ward || showWardDropdown ? 'top-2 text-[10px] font-black uppercase tracking-widest text-emerald-500' : 'text-sm normal-case tracking-normal top-1/2 -translate-y-1/2 text-gray-400'}`}>
+                                            Ward Assignment
+                                        </label>
+                                        <ChevronDown size={16} className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-transform duration-200 ${showWardDropdown ? 'rotate-180 text-emerald-500' : ''}`} />
+                                    </div>
+
+                                    {/* Dropdown List */}
+                                    <AnimatePresence>
+                                        {showWardDropdown && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                                className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden"
+                                            >
+                                                {/* Search hint */}
+                                                <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2 text-xs text-gray-400 font-semibold bg-gray-50/50">
+                                                    <Search size={12} /> Type to filter locations...
+                                                </div>
+                                                <ul className="max-h-48 overflow-y-auto py-1 scrollbar-thin">
+                                                    {filteredLocations.length > 0 ? (
+                                                        filteredLocations.map((loc) => (
+                                                            <li
+                                                                key={loc}
+                                                                onClick={() => {
+                                                                    setFormData({ ...formData, ward: loc });
+                                                                    setWardSearch(loc);
+                                                                    setShowWardDropdown(false);
+                                                                }}
+                                                                className={`px-5 py-2.5 cursor-pointer text-sm font-semibold transition-all duration-150 flex items-center gap-2 ${formData.ward === loc ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-emerald-50/50 hover:text-emerald-600'}`}
+                                                            >
+                                                                <MapPin size={13} className={`shrink-0 ${formData.ward === loc ? 'text-emerald-500' : 'text-gray-300'}`} />
+                                                                {loc}
+                                                                {formData.ward === loc && <Check size={14} className="ml-auto text-emerald-500" />}
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="px-5 py-4 text-sm text-gray-400 font-medium text-center">No locations found</li>
+                                                    )}
+                                                </ul>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </motion.div>
 
                                 {/* Floating Label Input: Password */}
                                 <motion.div variants={itemVariants} className="relative group/input col-span-2 sm:col-span-1">
                                     <input
                                         type="password" id="password" required minLength="6"
-                                        className="peer w-full px-5 pb-3 pt-6 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold tracking-wider placeholder-transparent"
+                                        className="peer w-full px-5 pt-7 pb-2.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all font-bold tracking-wider placeholder-transparent"
                                         placeholder="Password"
                                         value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                     />
-                                    <label htmlFor="password" className="absolute left-5 top-4 text-gray-400 font-semibold text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-4 peer-focus:-translate-y-2 peer-focus:text-xs peer-focus:text-emerald-500 peer-focus:font-bold pointer-events-none">
+                                    <label htmlFor="password" className="absolute left-5 top-2 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all pointer-events-none peer-placeholder-shown:text-sm peer-placeholder-shown:normal-case peer-placeholder-shown:tracking-normal peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-focus:top-2 peer-focus:-translate-y-0 peer-focus:text-[10px] peer-focus:uppercase peer-focus:tracking-widest peer-focus:text-emerald-500">
                                         Password (Min 6)
                                     </label>
 

@@ -22,16 +22,22 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatCard({ icon: Icon, iconBg, iconColor, value, label, sub }) {
+function StatCard({ icon: Icon, gradient, value, label, sub, accent }) {
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.07)] transition-all flex flex-col relative overflow-hidden group">
-            <div className={`absolute -right-6 -bottom-6 w-32 h-32 rounded-full opacity-40 group-hover:scale-150 transition-transform duration-700 pointer-events-none ${iconBg}`} />
-            <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center mb-5 shadow-inner ${iconBg} ${iconColor}`}>
-                <Icon size={22} strokeWidth={2.5} />
+        <div className={`relative p-6 rounded-2xl overflow-hidden flex flex-col group cursor-default border ${gradient}`}>
+            {/* Glow orb */}
+            <div className={`absolute -right-8 -bottom-8 w-36 h-36 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 ${accent}`} />
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${accent} bg-opacity-20 border border-white/10`}>
+                <Icon size={20} className="text-white" strokeWidth={2.5} />
             </div>
-            <div className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-1">{value}</div>
-            {sub && <div className="text-xs font-bold text-green-500 mb-1">{sub}</div>}
-            <div className="text-[10px] uppercase tracking-widest font-black text-gray-400">{label}</div>
+            <div className="text-4xl font-black text-white tracking-tighter leading-none mb-1">{value}</div>
+            {sub && <div className="text-xs font-bold text-white/60 mb-1">{sub}</div>}
+            <div className="text-[10px] uppercase tracking-widest font-black text-white/50 mt-auto">{label}</div>
+            {/* Live dot */}
+            <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse" />
+                <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Live</span>
+            </div>
         </div>
     );
 }
@@ -243,164 +249,218 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="p-8 md:p-10 bg-gray-50 min-h-full font-sans">
-            {/* ── Header ── */}
-            <div className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <div className="inline-flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-md text-[9px] font-black tracking-widest uppercase text-ub-blue-hero mb-3 shadow-sm border border-blue-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-ub-blue-hero animate-pulse" />
-                        Production Root
+        <div className="min-h-full font-sans bg-gray-50">
+
+            {/* ── Dark Hero Header ── */}
+            <div className="relative bg-[#070B14] overflow-hidden px-8 md:px-10 py-10">
+                <div className="absolute top-0 left-0 w-[500px] h-[300px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-[400px] h-[200px] bg-indigo-600/10 blur-[100px] rounded-full pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase text-blue-400 mb-4">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                            Admin Control Panel · Live
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none mb-2">
+                            Analytics <span className="text-blue-400">Dashboard</span>
+                        </h1>
+                        <p className="text-[11px] text-white/40 font-bold uppercase tracking-widest">
+                            Real-time civic infrastructure monitoring
+                        </p>
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tighter leading-none mb-2">Matrix Overview</h1>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">
-                        Real-time macro-analysis of the CivicConnect grid
-                    </p>
-                </div>
 
-                <button
-                    onClick={handlePDFExport}
-                    className="inline-flex items-center gap-2 bg-ub-blue-hero hover:bg-ub-blue-dark text-white px-5 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(27,63,160,0.35)] hover:shadow-[0_6px_28px_rgba(27,63,160,0.5)] transition-all active:scale-95"
-                >
-                    <Download size={15} /> Download Report
-                </button>
+                    <button
+                        onClick={handlePDFExport}
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(59,130,246,0.4)] hover:shadow-[0_6px_28px_rgba(59,130,246,0.6)] transition-all active:scale-95"
+                    >
+                        <Download size={15} /> Download Report
+                    </button>
+                </div>
             </div>
 
-            {/* ── KPI Summary Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-                <StatCard icon={Activity} iconBg="bg-blue-50" iconColor="text-ub-blue-hero" value={stats.total} label="Total Infrastructure Logs" sub={`+${stats.newThisMonth} this month`} />
-                <StatCard icon={CheckCircle} iconBg="bg-green-50" iconColor="text-green-500" value={stats.resolved} label="Nodes Resolved" sub={`+${stats.resolvedThisWeek} this week`} />
-                <StatCard icon={AlertTriangle} iconBg="bg-red-50" iconColor="text-red-500" value={stats.pending} label="Pending Critical Actions" />
-                <StatCard icon={Clock} iconBg="bg-amber-50" iconColor="text-amber-500" value={`${stats.avgResolutionDays}`} label="Avg Resolution (Days)" />
-            </div>
+            <div className="px-8 md:px-10 py-8 space-y-8">
 
-            {/* ── Analytics: Trend Line + Doughnut ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                {/* Trend Line Chart */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
-                    <SectionHeader icon={TrendingUp} title="6-Month Issue Trend" subtitle="Reported vs Resolved volume" />
-                    <div className="h-64"><Line data={getTrendLineData()} options={lineOptions} /></div>
+                {/* ── KPI Cards ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                    <StatCard icon={Activity}
+                        gradient="bg-gradient-to-br from-[#1B3FA0] to-[#1e56cc] border-blue-700/30"
+                        accent="bg-blue-400"
+                        value={stats.total}
+                        label="Total Reports"
+                        sub={`+${stats.newThisMonth} this month`} />
+                    <StatCard icon={CheckCircle}
+                        gradient="bg-gradient-to-br from-[#065f46] to-[#047857] border-green-700/30"
+                        accent="bg-green-400"
+                        value={stats.resolved}
+                        label="Issues Resolved"
+                        sub={`+${stats.resolvedThisWeek} this week`} />
+                    <StatCard icon={AlertTriangle}
+                        gradient="bg-gradient-to-br from-[#7f1d1d] to-[#991b1b] border-red-700/30"
+                        accent="bg-red-400"
+                        value={stats.pending}
+                        label="Pending Actions" />
+                    <StatCard icon={Clock}
+                        gradient="bg-gradient-to-br from-[#78350f] to-[#92400e] border-amber-700/30"
+                        accent="bg-amber-400"
+                        value={`${stats.avgResolutionDays}d`}
+                        label="Avg Resolution Time" />
                 </div>
 
-                {/* Status Doughnut */}
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
-                    <SectionHeader icon={Shield} title="Pipeline Status" subtitle="Resolution engine breakdown" />
-                    <div className="h-52 relative">
-                        <Doughnut data={getStatusDoughnutData(stats.statusStats || [])} options={doughnutOptions} />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <div className="text-3xl font-black text-gray-900 tracking-tighter">{stats.total}</div>
-                            <div className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total</div>
+                {/* ── Trend + Doughnut ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+                                <TrendingUp size={18} className="text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900 text-lg">6-Month Issue Trend</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reported vs Resolved volume</p>
+                            </div>
+                        </div>
+                        <div className="h-64"><Line data={getTrendLineData()} options={lineOptions} /></div>
+                    </div>
+
+                    <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
+                                <Shield size={18} className="text-purple-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900">Status Breakdown</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pipeline health</p>
+                            </div>
+                        </div>
+                        <div className="h-52 relative">
+                            <Doughnut data={getStatusDoughnutData(stats.statusStats || [])} options={doughnutOptions} />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <div className="text-3xl font-black text-gray-900 tracking-tighter">{stats.total}</div>
+                                <div className="text-[9px] font-black uppercase tracking-widest text-gray-400">Total</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* ── Analytics: Category & Area Bar Charts (tabbed) ── */}
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] mb-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <SectionHeader icon={Layers} title="Distribution Analysis" subtitle="Volume by category & location" />
-                    <div className="flex gap-2 shrink-0">
-                        <button
-                            onClick={() => setActiveTab('category')}
-                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'category' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                        >
-                            By Category
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('area')}
-                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'area' ? 'bg-ub-blue-hero text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                        >
-                            By Area
-                        </button>
+                {/* ── Distribution Bar Charts ── */}
+                <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                                <Layers size={18} className="text-indigo-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900 text-lg">Distribution Analysis</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Volume by category & location</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                            <button
+                                onClick={() => setActiveTab('category')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'category' ? 'bg-[#1B3FA0] text-white shadow-md shadow-blue-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                            >By Category</button>
+                            <button
+                                onClick={() => setActiveTab('area')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'area' ? 'bg-[#1B3FA0] text-white shadow-md shadow-blue-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                            >By Area</button>
+                        </div>
+                    </div>
+                    <div className="h-72">
+                        {activeTab === 'category'
+                            ? <Bar data={getCategoryBarData(stats.categoryStats || [])} options={barOptions} />
+                            : <Bar data={getAreaBarData(stats.areaStats || [])} options={barOptions} />
+                        }
                     </div>
                 </div>
-                <div className="h-72">
-                    {activeTab === 'category'
-                        ? <Bar data={getCategoryBarData(stats.categoryStats || [])} options={barOptions} />
-                        : <Bar data={getAreaBarData(stats.areaStats || [])} options={barOptions} />
-                    }
-                </div>
-            </div>
 
-            {/* ── Recent Issues Table ── */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden mb-8">
-                <div className="px-8 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
-                    <div>
-                        <h3 className="font-black text-lg text-gray-900 flex items-center gap-2">
-                            <FileText size={18} className="text-ub-blue-hero" /> Live Ticketing Node
-                        </h3>
-                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Most recent network alerts</div>
+                {/* ── Recent Issues ── */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+                    <div className="px-8 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h3 className="font-black text-lg text-gray-900 flex items-center gap-2">
+                                <FileText size={18} className="text-blue-600" /> Recent Issues
+                            </h3>
+                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Latest citizen reports</div>
+                        </div>
+                        <Link to="/admin/issues" className="text-[10px] font-black bg-gray-50 border border-gray-200 px-4 py-2 rounded-xl hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1 hover:border-blue-300 hover:text-blue-600">
+                            View All <ArrowUpRight size={13} />
+                        </Link>
                     </div>
-                    <Link to="/admin/issues" className="text-[10px] font-black bg-white border border-gray-200 px-4 py-2 rounded-lg hover:shadow-md transition-all uppercase tracking-widest flex items-center gap-1">
-                        View All <ArrowUpRight size={13} />
-                    </Link>
-                </div>
-                <div className="overflow-x-auto p-4">
-                    <table className="w-full text-left border-separate border-spacing-y-2">
-                        <thead className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                            <tr>
-                                <th className="px-5 py-2">Issue / Title</th>
-                                <th className="px-5 py-2">Reporter</th>
-                                <th className="px-5 py-2 hidden md:table-cell">Area</th>
-                                <th className="px-5 py-2 hidden sm:table-cell">Date</th>
-                                <th className="px-5 py-2 text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                            {issues.map(issue => (
-                                <tr key={issue._id} className="bg-white hover:bg-blue-50/30 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
-                                    <td className="px-5 py-4 rounded-l-2xl">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-gray-50 w-9 h-9 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 text-lg">
-                                                {CAT_EMOJI[issue.category] || '🌀'}
-                                            </div>
-                                            <div>
-                                                <div className="font-black text-[10px] text-ub-blue-hero uppercase tracking-widest">{issue.issueId}</div>
-                                                <div className="font-bold text-gray-900 text-sm max-w-[200px] truncate">{issue.title}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                        <span className="font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 text-xs">{issue.reportedBy?.name || 'Anonymous'}</span>
-                                    </td>
-                                    <td className="px-5 py-4 hidden md:table-cell">
-                                        <span className="flex items-center gap-1 text-xs font-bold text-gray-500">
-                                            <MapPin size={12} /> {issue.area || 'Unknown'}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-4 hidden sm:table-cell">
-                                        <span className="text-xs font-bold text-gray-400">{new Date(issue.createdAt).toLocaleDateString()}</span>
-                                    </td>
-                                    <td className="px-5 py-4 rounded-r-2xl text-right">
-                                        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${STATUS_STYLES[issue.status]}`}>
-                                            {STATUS_LABELS[issue.status] || issue.status}
-                                        </span>
-                                    </td>
+                    <div className="overflow-x-auto p-4">
+                        <table className="w-full text-left border-separate border-spacing-y-2">
+                            <thead className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                                <tr>
+                                    <th className="px-5 py-2">Issue</th>
+                                    <th className="px-5 py-2">Reporter</th>
+                                    <th className="px-5 py-2 hidden md:table-cell">Area</th>
+                                    <th className="px-5 py-2 hidden sm:table-cell">Date</th>
+                                    <th className="px-5 py-2 text-right">Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="text-sm">
+                                {issues.map(issue => (
+                                    <tr key={issue._id} className="bg-white hover:bg-blue-50/40 transition-colors shadow-sm ring-1 ring-gray-100 rounded-2xl group">
+                                        <td className="px-5 py-4 rounded-l-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-blue-50 w-9 h-9 rounded-xl border border-blue-100 flex items-center justify-center shrink-0 text-lg">
+                                                    {CAT_EMOJI[issue.category] || '🌀'}
+                                                </div>
+                                                <div>
+                                                    <div className="font-black text-[10px] text-blue-600 uppercase tracking-widest">{issue.issueId}</div>
+                                                    <div className="font-bold text-gray-900 text-sm max-w-[200px] truncate">{issue.title}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <span className="font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100 text-xs">{issue.reportedBy?.name || 'Anonymous'}</span>
+                                        </td>
+                                        <td className="px-5 py-4 hidden md:table-cell">
+                                            <span className="flex items-center gap-1 text-xs font-bold text-gray-500">
+                                                <MapPin size={12} className="text-blue-500" /> {issue.area || 'Unknown'}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-4 hidden sm:table-cell">
+                                            <span className="text-xs font-bold text-gray-400">{new Date(issue.createdAt).toLocaleDateString()}</span>
+                                        </td>
+                                        <td className="px-5 py-4 rounded-r-2xl text-right">
+                                            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg ${STATUS_STYLES[issue.status]}`}>
+                                                {STATUS_LABELS[issue.status] || issue.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            {/* ── Quick Nav Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link to="/admin/leaderboard" className="flex items-center gap-4 bg-gradient-to-r from-ub-blue-hero to-blue-500 text-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(27,63,160,0.3)] hover:shadow-[0_8px_30px_rgba(27,63,160,0.45)] transition-all hover:scale-[1.02] active:scale-100">
-                    <Trophy size={28} />
-                    <div>
-                        <div className="font-black text-lg">Citizen Leaderboard</div>
-                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-75 mt-0.5">Top contributor rankings</div>
-                    </div>
-                    <ArrowUpRight size={18} className="ml-auto" />
-                </Link>
-                <button onClick={handlePDFExport} className="flex items-center gap-4 bg-white border border-gray-200 text-gray-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all hover:scale-[1.02] active:scale-100">
-                    <Download size={28} className="text-ub-blue-hero" />
-                    <div className="text-left">
-                        <div className="font-black text-lg">Export Analytics PDF</div>
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Full dashboard report</div>
-                    </div>
-                    <ArrowUpRight size={18} className="ml-auto text-gray-400" />
-                </button>
+                {/* ── Quick Nav Cards ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Link to="/admin/leaderboard" className="flex items-center gap-4 bg-gradient-to-r from-[#070B14] to-[#1B3FA0] text-white p-6 rounded-2xl border border-blue-800/30 shadow-[0_4px_20px_rgba(27,63,160,0.3)] hover:shadow-[0_8px_30px_rgba(27,63,160,0.5)] transition-all hover:scale-[1.02] active:scale-100">
+                        <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/10">
+                            <Trophy size={24} className="text-yellow-400" />
+                        </div>
+                        <div>
+                            <div className="font-black text-lg">Citizen Leaderboard</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-0.5">Top contributor rankings</div>
+                        </div>
+                        <ArrowUpRight size={18} className="ml-auto opacity-60" />
+                    </Link>
+                    <button onClick={handlePDFExport} className="flex items-center gap-4 bg-white border border-gray-200 text-gray-800 p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all hover:scale-[1.02] active:scale-100 hover:border-blue-200">
+                        <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100">
+                            <Download size={24} className="text-blue-600" />
+                        </div>
+                        <div className="text-left">
+                            <div className="font-black text-lg">Export Analytics PDF</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Full dashboard report</div>
+                        </div>
+                        <ArrowUpRight size={18} className="ml-auto text-gray-400" />
+                    </button>
+                </div>
+
             </div>
         </div>
     );
 }
+
+

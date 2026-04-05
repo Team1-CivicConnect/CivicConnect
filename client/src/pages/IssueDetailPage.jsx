@@ -143,6 +143,11 @@ export default function IssueDetailPage() {
                                         Routed to: {issue.department}
                                     </span>
                                 )}
+                                {issue.aiVerification?.isGenuine && (
+                                    <span title={issue.aiVerification.details} className="font-black uppercase text-[10px] tracking-widest border border-green-400/50 bg-green-500/20 px-3 py-1 rounded-full text-green-100 backdrop-blur-sm flex items-center gap-1 shadow-sm cursor-help">
+                                        <ShieldCheck size={12} /> AI Verified
+                                    </span>
+                                )}
                                 <PriorityBadge priority={issue.priority} />
                             </div>
                         </div>

@@ -233,4 +233,91 @@ router.get('/issues/pdf', authenticate, authorize('admin'), async (req, res, nex
     }
 });
 
+// GET /api/v1/export/my-issues/pdf — Complete list for citizen
+router.get('/my-issues/pdf', authenticate, async (req, res, next) => {
+    try {
+        const issues = await Issue.find({ reportedBy: req.user.id })
+            .sort({ createdAt: -1 });
+
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="my-civic-reports.pdf"');
+        doc.pipe(res);
+
+        // Page 1: Header
+        doc.fontSize(22).font('Helvetica-Bold').text('CivicConnect', { align: 'center' });
+        doc.fontSize(10).font('Helvetica').fillColor('#666')
+            .text('My Submitted Reports', { align: 'center' });
+        doc.moveDown(0.3);
+        doc.fontSize(8).fillColor('#999')
+            .text(`Generated: ${new Date().toLocaleDateString()} | Total Reports: ${issues.length}`, { align: 'center' });
+        doc.moveDown(0.5);
+        doc.strokeColor('#1B3FA0').lineWidth(2)
+            .moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(1);
+
+        // Summary Table Header
+        const tableTop = doc.y;
+        const colWidths = [55, 130, 85, 70, 85, 70];
+        const headers = ['ID', 'Title', 'Category', 'Priority', 'Status', 'Date'];
+        
+        doc.fontSize(8).font('Helvetica-Bold').fillColor('#fff');
+        let xPos = 50;
+        doc.rect(50, tableTop - 3, 495, 16).fill('#1B3FA0');
+        xPos = 50;
+        headers.forEach((header, i) => {
+            doc.fillColor('#fff').text(header, xPos + 3, tableTop, { width: colWidths[i] - 6, ellipsis: true });
+            xPos += colWidths[i];
+        });
+        doc.moveDown(0.5);
+
+        // Table rows
+        let rowY = tableTop + 18;
+        doc.font('Helvetica').fontSize(7).fillColor('#333');
+
+        issues.forEach((issue, idx) => {
+            if (rowY > 750) {
+                doc.addPage();
+                rowY = 50;
+                
+                // Redraw headers on new page
+                doc.fontSize(8).font('Helvetica-Bold').fillColor('#fff');
+                doc.rect(50, rowY - 3, 495, 16).fill('#1B3FA0');
+                xPos = 50;
+                headers.forEach((header, i) => {
+                    doc.fillColor('#fff').text(header, xPos + 3, rowY, { width: colWidths[i] - 6, ellipsis: true });
+                    xPos += colWidths[i];
+                });
+                rowY += 18;
+                doc.font('Helvetica').fontSize(7).fillColor('#333');
+            }
+
+            if (idx % 2 === 0) doc.rect(50, rowY - 2, 495, 14).fill('#f8f9fa');
+
+            doc.fillColor('#333');
+            xPos = 50;
+            const row = [
+                issue.issueId || issue._id.toString().slice(-8),
+                issue.title,
+                (issue.category || '').replace('_', ' '),
+                (issue.priority || 'medium'),
+                (issue.status || '').replace('_', ' '),
+                new Date(issue.createdAt).toLocaleDateString()
+            ];
+
+            row.forEach((cell, i) => {
+                doc.text(String(cell), xPos + 3, rowY, { width: colWidths[i] - 6, ellipsis: true });
+                xPos += colWidths[i];
+            });
+
+            rowY += 14;
+        });
+
+        doc.end();
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

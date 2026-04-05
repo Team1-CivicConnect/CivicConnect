@@ -19,6 +19,10 @@ const issueSchema = new mongoose.Schema({
     aiPriorityScore: { type: Number },
     duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
     isDuplicate: { type: Boolean, default: false },
+    aiVerification: {
+        isGenuine: { type: Boolean, default: null },
+        details: { type: String }
+    },
 
     location: {
         type: { type: String, enum: ['Point'], default: 'Point' },

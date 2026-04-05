@@ -19,6 +19,7 @@ export default function ReportPage() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [legalAgreed, setLegalAgreed] = useState(false);
+    const [aiError, setAiError] = useState(null);
 
     const [formData, setFormData] = useState({
         title: '', description: '', category: '', lat: null, lng: null, files: [], address: ''
@@ -44,15 +45,23 @@ export default function ReportPage() {
     }, [formData.title, formData.description, formData.category, formData.lat, formData.lng, formData.address]);
 
     const handleNext = () => setStep(s => s + 1);
-    const handlePrev = () => setStep(s => s - 1);
+    const handlePrev = () => {
+        setAiError(null);
+        setStep(s => s - 1);
+    };
 
     const handleFileChange = (e) => {
+        setAiError(null);
         const newFiles = Array.from(e.target.files);
         if (newFiles.length + formData.files.length > 5) return toast.error("Maximum 5 blocks allowed.");
         setFormData(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
     };
 
-    const removeFile = (idx) => setFormData(p => ({ ...p, files: p.files.filter((_, i) => i !== idx) }));
+    const removeFile = (idx) => {
+        setAiError(null);
+        setFormData(p => ({ ...p, files: p.files.filter((_, i) => i !== idx) }));
+    };
+    
     const setPosition = (coords) => setFormData(p => ({ ...p, lat: coords[0], lng: coords[1] }));
     const setAddress = (addr) => setFormData(p => ({ ...p, address: addr }));
 
@@ -79,7 +88,12 @@ export default function ReportPage() {
             toast.success("Anomaly officially committed!");
             navigate(`/issue/${data.issue._id}`);
         } catch (err) {
-            toast.error(err.response?.data?.message || "Transmission failed.");
+            if (err.response?.data?.aiError) {
+                setAiError(err.response.data);
+                toast.error("AI Verification failed. Please review the highlighted errors.", { duration: 5000 });
+            } else {
+                toast.error(err.response?.data?.message || "Transmission failed.");
+            }
         } finally {
             setLoading(false);
         }
@@ -156,7 +170,7 @@ export default function ReportPage() {
                                 )}
 
                                 <div>
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Add Photos (Max 5)</h4>
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Add Photos (Max 5) <span className="text-red-500">* Required</span></h4>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <label className="border-2 border-dashed border-gray-300 rounded-[20px] aspect-square flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 hover:border-ub-blue-hero transition-all group bg-white shadow-sm overflow-hidden relative">
                                             <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
@@ -174,7 +188,7 @@ export default function ReportPage() {
                             </div>
 
                             <div className="pt-8 flex justify-end mt-auto">
-                                <button onClick={handleNext} disabled={!formData.lat} className="bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] transition-all flex items-center gap-2 disabled:opacity-50">
+                                <button onClick={handleNext} disabled={!formData.lat || formData.files.length === 0} className="bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl hover:shadow-[0_10px_20px_rgba(0,0,0,0.1)] transition-all flex items-center gap-2 disabled:opacity-50">
                                     Next Step <ArrowRight size={16} />
                                 </button>
                             </div>
@@ -251,6 +265,21 @@ export default function ReportPage() {
                                 <h3 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Final Review</h3>
                                 <p className="text-gray-500 font-medium text-sm">Review your report details closely before submitting.</p>
                             </div>
+
+                            {aiError && (
+                                <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 flex items-start gap-4 shadow-sm animate-fadeIn">
+                                    <div className="bg-red-100 text-red-600 p-2 rounded-lg">
+                                        <ShieldAlert size={20} />
+                                    </div>
+                                    <div className="pt-0.5">
+                                        <div className="text-sm font-black text-red-900 uppercase tracking-widest mb-1">AI Verification Rejection</div>
+                                        <div className="text-xs font-bold text-red-700 leading-snug">{aiError.reasoning}</div>
+                                        <div className="text-[10px] font-semibold text-red-500 mt-2">
+                                            Please go back to Step 1 and replace block {aiError.failedImageIndex !== undefined ? aiError.failedImageIndex + 1 : ''}.
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-2">
                                 <div className="bg-gray-50 rounded-3xl p-6 border border-gray-200 space-y-6">

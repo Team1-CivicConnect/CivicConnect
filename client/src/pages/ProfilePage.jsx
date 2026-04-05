@@ -471,17 +471,39 @@ export default function ProfilePage() {
                     {/* Content Section */}
                     <div className="bg-white/70 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.06)] rounded-[30px] p-6 lg:p-8 relative min-h-[500px]">
 
-                        {/* Tabs */}
-                        <div className="flex bg-gray-100/50 p-1 rounded-2xl backdrop-blur-md mb-8 inline-flex">
-                            {[
-                                { key: 'reports', label: 'My Reports', icon: FileText },
-                                { key: 'timeline', label: 'Timeline', icon: Clock },
-                            ].map(({ key, label, icon: Icon }) => (
-                                <button key={key} onClick={() => setActiveTab(key)}
-                                    className={`px-6 py-2.5 rounded-[12px] text-sm font-black transition-all flex items-center gap-2 tracking-wide ${activeTab === key ? 'bg-white text-ub-blue-hero shadow-sm border border-gray-200/50' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'}`}>
-                                    <Icon size={16} /> {label}
-                                </button>
-                            ))}
+                        {/* Navigation & Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                            {/* Tabs */}
+                            <div className="flex bg-gray-100/50 p-1 rounded-2xl backdrop-blur-md inline-flex">
+                                {[
+                                    { key: 'reports', label: 'My Reports', icon: FileText },
+                                    { key: 'timeline', label: 'Timeline', icon: Clock },
+                                ].map(({ key, label, icon: Icon }) => (
+                                    <button key={key} onClick={() => setActiveTab(key)}
+                                        className={`px-6 py-2.5 rounded-[12px] text-sm font-black transition-all flex items-center gap-2 tracking-wide ${activeTab === key ? 'bg-white text-ub-blue-hero shadow-sm border border-gray-200/50' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'}`}>
+                                        <Icon size={16} /> {label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button onClick={async () => {
+                                try {
+                                    toast.loading('Generating PDF...', { id: 'pdf-dl' });
+                                    const response = await api.get('/export/my-issues/pdf', { responseType: 'blob' });
+                                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = 'my-civic-reports.pdf';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    toast.success('Downloaded!', { id: 'pdf-dl' });
+                                } catch (err) {
+                                    toast.error('Failed to download PDF', { id: 'pdf-dl' });
+                                }
+                            }} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#f8f9fa] border border-gray-200 hover:border-ub-blue-hero text-gray-700 hover:text-ub-blue-hero rounded-[12px] text-sm font-black transition-all shadow-sm">
+                                <FileText size={16} /> Download All Reports
+                            </button>
                         </div>
 
                         {/* Tab Content */}

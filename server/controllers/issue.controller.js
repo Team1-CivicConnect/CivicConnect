@@ -2,19 +2,56 @@ const Issue = require('../models/Issue.model');
 const User = require('../models/User.model');
 const generateIssueId = require('../utils/generateIssueId');
 const { calculatePriority } = require('../utils/priorityEngine');
+const { verifyIssueImage } = require('./ai.controller');
 
 exports.createIssue = async (req, res, next) => {
     try {
         const { title, description, category, lat, lng } = req.body;
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'At least one photo is required to submit a report.' });
+        }
+
+        // --- AI Verification ---
+        let allVerified = true;
+        let failReason = "";
+        let failedImageIndex = -1;
+        let aiBypassed = false;
+        let aiDetails = "All attached image blocks verified as genuine anomalies.";
+
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
+            const verification = await verifyIssueImage(title, description, category, file);
+            
+            if (verification.isBypassed) {
+                aiBypassed = true;
+                aiDetails = verification.reasoning;
+            } else if (!verification.isGenuine) {
+                allVerified = false;
+                failReason = verification.reasoning;
+                failedImageIndex = i;
+                break; // stop at first failure
+            }
+        }
+        
+        if (!allVerified) {
+            return res.status(400).json({ 
+                message: `AI Verification Failed for Block ${failedImageIndex + 1}: ${failReason}`,
+                aiError: true,
+                failedImageIndex,
+                reasoning: failReason
+            });
+        }
+
         const issueId = await generateIssueId();
 
-        const photos = req.files ? req.files.map(file => {
+        const photos = req.files.map(file => {
             const isLocal = !process.env.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY === '123';
             return {
                 url: isLocal ? `http://localhost:5000/uploads/${file.filename}` : file.path,
                 publicId: file.filename || file.public_id || `sample_${Date.now()}`
             };
-        }) : [];
+        });
 
         const issue = new Issue({
             issueId,
@@ -26,6 +63,10 @@ exports.createIssue = async (req, res, next) => {
                 coordinates: [parseFloat(lng), parseFloat(lat)] // GeoJSON is [lng, lat]
             },
             address: req.body.address,
+            aiVerification: {
+                isGenuine: aiBypassed ? false : true,
+                details: aiDetails
+            },
             photos,
             reportedBy: req.user.id,
             statusHistory: [{

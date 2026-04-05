@@ -14,57 +14,51 @@ const transporter = nodemailer.createTransport({
 // ── OTP Email ─────────────────────────────────────────────────────────────────
 const sendOtpEmail = async (email, name, otp) => {
     const mailOptions = {
-        from: `"CivicConnect — Ubayog" <${process.env.EMAIL_USER}>`,
+        from: `"CivicConnect HQ" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: '🔐 Your CivicConnect Verification Code',
+        subject: '🔐 Account Verification: CivicConnect',
         html: `
         <!DOCTYPE html>
         <html>
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:40px 20px;">
-                <tr><td align="center">
-                    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-                        <!-- Header -->
-                        <tr>
-                            <td style="background:linear-gradient(135deg,#1a56db 0%,#0e9f6e 100%);padding:36px 40px;text-align:center;">
-                                <div style="width:52px;height:52px;background:rgba(255,255,255,0.2);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-                                    <span style="color:#fff;font-size:26px;font-weight:900;line-height:52px;">C</span>
-                                </div>
-                                <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px;">CivicConnect</h1>
-                                <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;">Ubayog Civic Issue Reporting Portal</p>
-                            </td>
-                        </tr>
-                        <!-- Body -->
-                        <tr>
-                            <td style="padding:40px 40px 32px;">
-                                <h2 style="margin:0 0 8px;color:#111827;font-size:20px;font-weight:800;">Verify Your Email Address</h2>
-                                <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6;">
-                                    Hi <strong style="color:#111827;">${name}</strong>, welcome to the Ubayog platform! 
-                                    Use the code below to verify your account. This code expires in <strong>10 minutes</strong>.
-                                </p>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+                body { margin: 0; padding: 0; background-color: #070B14; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #FFFFFF; }
+                .wrapper { width: 100%; background-color: #070B14; padding: 40px 0; }
+                .container { width: 500px; margin: 0 auto; background: #0F172A; border: 1px solid #1E293B; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+                .header { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); padding: 60px 40px; text-align: center; position: relative; }
+                .header-logo { width: 48px; hieght: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.3); }
+                .body { padding: 40px; }
+                .otp-box { background: #1E293B; border-radius: 16px; padding: 30px; text-align: center; border: 1px solid #334155; margin: 30px 0; }
+                .footer { background: #0F172A; padding: 30px; text-align: center; border-top: 1px solid #1E293B; color: #64748B; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="header">
+                        <div style="font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -1px;">Civic<span style="color:rgba(255,255,255,0.6)">Connect</span></div>
+                        <div style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; margin-top: 8px; letter-spacing: 2px;">Identity Verification</div>
+                    </div>
+                    <div class="body">
+                        <h2 style="margin: 0; color: #fff; font-size: 24px; font-weight: 800;">Welcome, ${name}</h2>
+                        <p style="color: #94A3B8; font-size: 15px; line-height: 1.6; margin-top: 10px;">Security is our top priority. Please use the following code to finalize your registration on the platform.</p>
+                        
+                        <div class="otp-box">
+                            <div style="font-size: 48px; font-weight: 800; color: #3B82F6; letter-spacing: 10px;">${otp}</div>
+                            <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; margin-top: 12px; letter-spacing: 2px;">Expires in 10 minutes</div>
+                        </div>
 
-                                <!-- OTP Box -->
-                                <div style="background:#f0f4ff;border:2px dashed #1a56db;border-radius:12px;padding:28px;text-align:center;margin-bottom:28px;">
-                                    <p style="margin:0 0 8px;color:#6b7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Verification Code</p>
-                                    <div style="font-size:42px;font-weight:900;letter-spacing:14px;color:#1a56db;font-family:'Courier New',monospace;">${otp}</div>
-                                </div>
-
-                                <p style="margin:0 0 8px;color:#9ca3af;font-size:13px;line-height:1.6;">
-                                    🔒 If you didn't create a CivicConnect account, you can safely ignore this email. 
-                                    Never share this code with anyone.
-                                </p>
-                            </td>
-                        </tr>
-                        <!-- Footer -->
-                        <tr>
-                            <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;text-align:center;">
-                                <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Ubayog Incorporated · CivicConnect Platform</p>
-                            </td>
-                        </tr>
-                    </table>
-                </td></tr>
-            </table>
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 16px; background: #FFF7ED; border-radius: 12px; border: 1px solid #FFEDD5; color: #9A3412; font-size: 12px; font-weight: 600;">
+                           ⚠️ If you didn't request this code, your account might be at risk.
+                        </div>
+                    </div>
+                    <div class="footer">
+                        © 2024 UBAYOG INC · CIVICCONNECT INFRASTRUCTURE
+                    </div>
+                </div>
+            </div>
         </body>
         </html>
         `
@@ -76,60 +70,64 @@ const sendOtpEmail = async (email, name, otp) => {
 // ── Issue Status Notification Email ──────────────────────────────────────────
 const sendIssueStatusEmail = async (email, name, issueTitle, issueId, newStatus) => {
     const statusConfig = {
-        submitted:    { label: 'Submitted',       color: '#ef4444', emoji: '📋', msg: 'Your issue has been received and is in our queue.' },
-        under_review: { label: 'Under Review',    color: '#f59e0b', emoji: '🔍', msg: 'A civic team is actively reviewing your report.' },
-        in_progress:  { label: 'In Progress',     color: '#3b82f6', emoji: '🔧', msg: 'Work has begun on resolving your reported issue.' },
-        resolved:     { label: 'Resolved ✓',      color: '#10b981', emoji: '✅', msg: 'Great news! Your reported issue has been resolved.' },
-        closed:       { label: 'Closed',           color: '#6b7280', emoji: '🔒', msg: 'This issue has been closed.' },
-        rejected:     { label: 'Rejected',         color: '#ef4444', emoji: '❌', msg: 'This issue has been reviewed and rejected.' },
+        submitted:    { label: 'Submitted',       color: '#EF4444', bg: '#450A0A', emoji: '📋', msg: 'The network has registered your report.' },
+        under_review: { label: 'Under Review',    color: '#F59E0B', bg: '#451A03', emoji: '🔍', msg: 'A diagnostic team is analyzing your report.' },
+        in_progress:  { label: 'In Progress',     color: '#3B82F6', bg: '#1E3A8A', emoji: '🔧', msg: 'Active infrastructure repair is underway.' },
+        resolved:     { label: 'Resolved ✓',      color: '#10B981', bg: '#064E3B', emoji: '✅', msg: 'This node is now fully operational.' },
+        closed:       { label: 'Closed',           color: '#6B7280', bg: '#1F2937', emoji: '🔒', msg: 'Final audit complete. Case closed.' },
+        rejected:     { label: 'Rejected',         color: '#EF4444', bg: '#450A0A', emoji: '❌', msg: 'Report rejected post-evaluation.' },
     };
-    const s = statusConfig[newStatus] || { label: newStatus, color: '#6b7280', emoji: '📌', msg: 'Your issue status has been updated.' };
+    const s = statusConfig[newStatus] || { label: newStatus, color: '#3B82F6', bg: '#1E3A8A', emoji: '📌', msg: 'Status update successful.' };
 
     const mailOptions = {
-        from: `"CivicConnect — Ubayog" <${process.env.EMAIL_USER}>`,
+        from: `"CivicConnect Matrix" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: `${s.emoji} Issue Update: "${issueTitle}" is now ${s.label}`,
+        subject: `[STATUS] ${s.emoji} "${issueTitle}" updated to ${s.label}`,
         html: `
         <!DOCTYPE html>
         <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:40px 20px;">
-                <tr><td align="center">
-                    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-                        <tr>
-                            <td style="background:linear-gradient(135deg,#1a56db 0%,#0e9f6e 100%);padding:36px 40px;text-align:center;">
-                                <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;">CivicConnect</h1>
-                                <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;">Issue Status Update</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding:40px 40px 32px;">
-                                <h2 style="margin:0 0 8px;color:#111827;font-size:20px;font-weight:800;">Status Update on Your Issue</h2>
-                                <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6;">Hi <strong>${name}</strong>, here's an update on your civic report:</p>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+                body { margin: 0; padding: 0; background-color: #070B14; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #FFFFFF; }
+                .wrapper { width: 100%; background-color: #070B14; padding: 40px 0; }
+                .container { width: 520px; margin: 0 auto; background: #0F172A; border: 1px solid #1E293B; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+                .header { background: linear-gradient(135deg, ${s.color} 0%, #070B14 100%); padding: 50px 40px; text-align: left; }
+                .body { padding: 40px; }
+                .status-badge { display: inline-flex; align-items: center; background: ${s.bg}; border: 1px solid ${s.color}40; color: ${s.color}; padding: 8px 16px; border-radius: 100px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+                .issue-card { background: #1E293B; border-radius: 16px; padding: 24px; border: 1px solid #334155; margin: 24px 0; }
+                .footer { background: #0F172A; padding: 30px; text-align: center; border-top: 1px solid #1E293B; color: #64748B; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="header">
+                        <div class="status-badge">${s.emoji} ${newStatus}</div>
+                        <h1 style="margin: 20px 0 0; color: #fff; font-size: 28px; font-weight: 800; letter-spacing: -1px; line-height: 1;">Status <span style="color:${s.color}">Updated</span></h1>
+                    </div>
+                    <div class="body">
+                        <p style="color: #94A3B8; font-size: 15px; font-weight: 600;">Hi ${name}, there is progress on your report.</p>
+                        
+                        <div class="issue-card">
+                            <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1.5px;">Problem Summary</div>
+                            <div style="font-size: 18px; font-weight: 800; color: #fff;">${issueTitle}</div>
+                            <div style="border-top: 1px solid #334155; margin: 16px 0; padding-top: 16px;">
+                                <div style="font-size: 10px; color: #64748B; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1.5px;">Reference ID</div>
+                                <div style="font-size: 12px; font-weight: 700; color: ${s.color}; opacity: 0.8; font-family: monospace;">${issueId}</div>
+                            </div>
+                        </div>
 
-                                <div style="background:#f9fafb;border-left:4px solid ${s.color};border-radius:8px;padding:20px 24px;margin-bottom:24px;">
-                                    <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Issue</p>
-                                    <p style="margin:0 0 12px;font-size:17px;font-weight:800;color:#111827;">${issueTitle}</p>
-                                    <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Reference ID</p>
-                                    <p style="margin:0;font-size:13px;font-weight:700;color:#1a56db;font-family:monospace;">${issueId}</p>
-                                </div>
-
-                                <div style="background:${s.color}18;border:2px solid ${s.color}33;border-radius:10px;padding:18px 24px;text-align:center;margin-bottom:24px;">
-                                    <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;">New Status</p>
-                                    <p style="margin:0;font-size:22px;font-weight:900;color:${s.color};">${s.emoji} ${s.label}</p>
-                                    <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">${s.msg}</p>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;text-align:center;">
-                                <p style="margin:0;color:#9ca3af;font-size:12px;">© 2025 Ubayog Incorporated · CivicConnect Platform</p>
-                            </td>
-                        </tr>
-                    </table>
-                </td></tr>
-            </table>
+                        <p style="color: #64748B; font-size: 14px; font-weight: 600; line-height: 1.6; text-align: center; border-top: 1px solid #1E293B; padding-top: 24px; margin-top: 24px;">
+                            ${s.msg} To view detailed logs or photos, please visit your citizen dashboard.
+                        </p>
+                    </div>
+                    <div class="footer">
+                        NETWORK STATUS: ACTIVE · OPS TEAM: UBAYOG
+                    </div>
+                </div>
+            </div>
         </body>
         </html>
         `
